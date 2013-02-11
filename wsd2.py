@@ -5,6 +5,7 @@ import sys
 import getopt
 import os
 import codecs
+from lxml import etree as ElementTree
 from pynlpl.formats.moses import PhraseTable
 import corenlp
 import timbl
@@ -14,8 +15,8 @@ def usage():
     print >> sys.stderr,"Usage: wsd2.py --train -s [source-text] -t [target-text] -m [moses-phrasetable] -w [targetwords-file]"
     print >> sys.stderr," -c [int]   context size"
     print >> sys.stderr," -l         add lemmatisation features"
-    print >> sys.stderr," -p         PoS-tag"    
-    print >> sys.stderr," -b         Generate Bag-of-Words"
+    print >> sys.stderr," -p         add PoS-tag features"    
+    print >> sys.stderr," -b         Generate Bag-of-Words for keywords global context"
     print >> sys.stderr," -B [absolute_threshold,probability_threshold,filter_threshold]" #TODO: implement
     print >> sys.stderr,"                        Parameters for the selection of bag of words."            
     print >> sys.stderr,"          1) Bag-of-word needs to occur at least x times in context"
@@ -60,6 +61,71 @@ class Tagger(object):
             return words, pos, lemmas
             
             
+class TestSet(object):
+    languages = {
+        'english': 'en',
+        'french': 'fr',
+        'italian': 'it',
+        'german': 'de',
+        'dutch': 'nl',
+    }
+
+    def __init__(self, filenames = []):
+        if (isinstance( filenames,str) or isinstance(filenames,unicode)):
+            self.load(filenames) 
+        else:
+            for filename in filenames:
+                self.load(filename)
+                
+
+    def load(self, filename):  
+        """Read test or trial data and parses it into a usable datastructure"""
+        tree = ElementTree.parse(filename)
+        root = tree.xpath("/corpus")
+        if len(root) > 0: 
+            root = root[0]
+        else:
+            raise Exception("This is not a valid test-file!")
+        self.lang = TestSet.languages[root.attrib['lang']]
+        self.lexunits = {}
+        self.orderedlemmas = [] #we have to retain the order somehow, dictionary is unordered
+
+        for lemmanode in root.findall('.//lexelt'):
+            lemma, pos = lemmanode.attrib['item'].rsplit(".",1)
+
+            instances = {}
+            for instancenode in lemmanode.findall('.//instance'):            
+                id = int(instancenode.attrib['id'])
+                contextnode = instancenode.find('.//context')
+                leftcontext = contextnode.text
+                if not leftcontext: leftcontext = ""    
+                if not isinstance(leftcontext, unicode):
+                    leftcontext = unicode(leftcontext, 'utf-8')
+                headnode = contextnode.find('.//head')
+                head = headnode.text
+                if not isinstance(head, unicode):
+                    head = unicode(head, 'utf-8')
+                rightcontext = headnode.tail
+                if not rightcontext: rightcontext = ""
+                if rightcontext and not isinstance(rightcontext, unicode):
+                    rightcontext = unicode(rightcontext, 'utf-8')
+                instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
+
+            self.lexunits[lemma+'.'+pos] = instances
+            self.orderedlemmas.append( (lemma,pos) ) #(so we can keep right ordering)
+
+    def lemmas(self):
+        for lemma,pos in self.orderedlemmas:
+            yield lemma, pos
+
+    def has(self, lemma, pos):
+        return (lemma+'.'+pos in self.lexunits)
+
+    def instances(self, lemma,pos):
+        if lemma+'.'+pos in self.lexunits:
+            return sorted(self.lexunits[lemma+'.'+pos].items()) #return instances ordered
+        else:
+            raise KeyError
 
             
 
@@ -155,6 +221,19 @@ class CLWSD2Trainer(object):
 
         f_source.close()
         f_target.close()
+        
+        
+        print >>sys.stderr, "Training classifiers"
+        for classifier in self.classifiers:
+            self.classifiers[classifier].train()
+            
+        
+        #TODO: paramsearch    
+        
+  
+    
+class CLWSD2Tester(object):          
+    pass    
                     
                     
     
