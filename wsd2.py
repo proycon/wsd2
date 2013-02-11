@@ -6,7 +6,8 @@ import getopt
 import os
 import codecs
 from pynlpl.formats.moses import PhraseTable
-from pynlpl.clients.frogclient import FrogClient
+import corenlp
+import timbl
 
 def usage():
     """Print usage instructions"""
@@ -21,30 +22,46 @@ def usage():
     print >> sys.stderr,"          2) Bag-of-word needs to have sense|keyword probability of at least x"
     print >> sys.stderr,"          3) Filter out words with a global corpus occurence less than x"
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
-    print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel], start the tagger server manually first"
-    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel], start the tagger server manually first"
+    print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
+    #print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel], start the tagger server manually first"
     
 class Tagger(object):    
-    def __init__(self, *args):        
+     def __init__(self, *args):        
+        self.tagger = None
         if args[0] == "frog":
             self.mode = "frog"
             self.port = int(args[1])
-            #TODO 
         elif args[0] == "freeling":
             self.mode = "freeling"
             self.channel = int(args[1])
+        elif args[0] == "corenlp":
+            self.mode = "corenlp"
+            self.tagger = corenlp.StanfordCoreNLP()            
         else:
             raise Exception("Invalid mode: " + args[0])
         
-    def process(self, words):
+     def process(self, words):
         if self.mode == "frog":
             #TODO
-            pass
+            raise NotImplemented
         elif self.mode == "freeling":
             #TODO
-            pass
-        
-        
+            raise NotImplemented
+        elif self.mode == "corenlp":            
+            data = self.tagger.parse(" ".join(words))
+            words = []
+            postags = []
+            lemmas = []
+            for sentence in data['sentences']:
+                for word, worddata in sentence['words']:
+                    words.append(word)
+                    lemmas.append(worddata['Lemma'])
+                    postags.append(worddata['PartOfSpeech'])
+            return words, pos, lemmas
+            
+            
+
+            
 
     
 class CLWSD2Trainer(object):    
@@ -80,6 +97,7 @@ class CLWSD2Trainer(object):
         self.DOLEMMAS = DOLEMMAS
         self.exemplarweights = exemplarweights
         self.outputdir = outputdir
+        self.classifiers = {}
         
     def run():        
         print >>sys.stderr, "Reading texts and extracting features"
@@ -92,12 +110,10 @@ class CLWSD2Trainer(object):
             sourcewords = sourceline.split()
             targetwords = targetline.split()
             
-            sourcepostags, sourcelemmas = sourcetagger.process(sourcewords)
+            sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords)
             #targetpostags, targetlemmas = targettagger.process(targetwords)            
             
-            for i, sourceword in enumerate(sourcewords):                
-                sourcepos = sourcepostags[i]
-                sourcelemma = sourcelemmas[i]
+            for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
 
                 if (sourcelemma, sourcepos) in targetwords and sourceword in phrasetable:
                     
@@ -128,16 +144,12 @@ class CLWSD2Trainer(object):
                         for j in range(0,len(targetwords)):
                             if " ".join(targetwords[j:j+n]) == target:
                                 found = True
-                                print >>sys.stderr, "\t" + targetword.encode('utf-8')
-                                
-                                f = codecs.open(self.outputdir + "/" + sourcelemma + '.' + sourcepos + '.train','a','utf-8')
-                                f.write("\t".join(features) + "\n")
-                                f.write("\t" + target + "\n")
-                                if self.exemplarweights:
-                                    f.write("\t" + str(Pts) + "\n")
-                                f.close()
-                                #targetlemma = targetlemmas[j]
-                                #targetpos = targetpostags[j]
+                                print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
+                                if not (sourcelemma,sourcepos) in self.classifiers:
+                                    self.classifiers[(sourcelemma,sourcepos)] = timbl.TimblClassifier(sourcelemma +'.' + sourcepos, self.timbloptions)
+                            
+                                self.classifiers[(sourcelemma,sourcepos)].append(features, target)
+
                      
                     print >>sys.stderr                           
 
@@ -186,7 +198,10 @@ if __name__ == "__main__":
             sourcetagger = Tagger(*a.split(':'))
         elif o == "--Ttagger":
             targettagger = Tagger(*a.split(':'))
-    
+        else: 
+            print >>sys.stderr,"Unknown option: ", o
+            sys.exit(2)
+            
     
     
     
