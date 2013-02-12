@@ -9,7 +9,7 @@ def processfile(filename, targetwords):
     f = codecs.open(filename,'r','utf-8')
     for line in f:
          first, second = line.split(' :: ',2)
-         lemma,pos,lang = first.split(' ').split('.')
+         lemma,pos,lang = first.split(' ')[0].split('.')
          if not (lemma,pos) in targetwords:
             targetwords[(lemma,pos)] = {}
          if not lang in targetwords[(lemma,pos)]:
