@@ -109,7 +109,7 @@ class TestSet(object):
                 if not rightcontext: rightcontext = ""
                 if rightcontext and not isinstance(rightcontext, unicode):
                     rightcontext = unicode(rightcontext, 'utf-8')
-                instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
+                instances[id] = (id, leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
 
             self.lexunits[lemma+'.'+pos] = instances
             self.orderedlemmas.append( (lemma,pos) ) #(so we can keep right ordering)
@@ -127,12 +127,19 @@ class TestSet(object):
         else:
             raise KeyError
 
-            
+def loadtargetwords(targetwordsfile):            
+    targetwords = set()
+    f = codecs.open(targetwordsfile, 'r','utf-8')
+    for line in f:
+        if line.strip() and line[0] != '#':
+            lemma,pos = line.strip().split('\t')
+            targetwords.add( (lemma,pos) )
+    return targetwords
 
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights):      
+    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, exemplarweights):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -145,16 +152,13 @@ class CLWSD2Trainer(object):
         self.targetfile = targetfile
         
         self.sourcetagger = sourcetagger
-        self.targettagger = targettagger
+        
         
         print >>sys.stderr, "Loading Target Words " + targetwordsfile
-        self.targetwords = set()
-        f = codecs.open(targetwordsfile, 'r','utf-8')
-        for line in f:
-            if line.strip() and line[0] != '#':
-                lemma,pos = line.strip().split('\t')
-                self.targetwords.add( (lemma,pos) )             
-                        
+        self.targetwords = loadtargetwords(targetwordsfile)
+        
+     
+        self.targetlang = targetlang                        
         print >>sys.stderr, "Loading Moses Phrasetable " + phrasetablefile
         self.phrasetable = PhraseTable(phrasetablefile)
         
@@ -164,6 +168,7 @@ class CLWSD2Trainer(object):
         self.exemplarweights = exemplarweights
         self.outputdir = outputdir
         self.classifiers = {}
+        
         
     def run():        
         print >>sys.stderr, "Reading texts and extracting features"
@@ -212,9 +217,9 @@ class CLWSD2Trainer(object):
                                 found = True
                                 print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
                                 if not (sourcelemma,sourcepos) in self.classifiers:
-                                    self.classifiers[(sourcelemma,sourcepos)] = timbl.TimblClassifier(sourcelemma +'.' + sourcepos, self.timbloptions)
+                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
                             
-                                self.classifiers[(sourcelemma,sourcepos)].append(features, target)
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
 
                      
                     print >>sys.stderr                           
@@ -233,11 +238,95 @@ class CLWSD2Trainer(object):
   
     
 class CLWSD2Tester(object):          
-    pass    
-                    
-                    
-    
-    
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, timbloptions):        
+        self.sourcetagger = sourcetagger
+        
+        
+        print >>sys.stderr, "Loading Target Words " + targetwordsfile       
+        self.targetwords = loadtargetwords(targetwordsfile)
+        self.testdata = {}
+        self.classifiers = {}
+        
+        self.targetlang = targetlang
+        
+        self.testdata[(lemma,pos)] = TestSet(testdir+"/" + lemma + '.data')
+
+        self.contextsize = contextsize
+        self.DOPOS = DOPOS
+        self.DOLEMMAS = DOLEMMAS
+        self.exemplarweights = exemplarweights
+        self.outputdir = outputdir
+
+        testfiles = []
+        for lemma, pos in self.targetwords:
+            if os.path.exists(testdir+"/" + lemma + '.data'):
+                testfiles.append(testdir+"/" + lemma + '.data')
+            else:
+                print >>sys.stderr, "WARNING: No testfile found for ", lemma
+                
+        self.testset = TestSet(testfiles)
+        self.timbloptions = timbloptions
+              
+       
+    def run(self):
+        print >>sys.stderr, "Extracting features from testset"
+        for lemma,pos in self.testdata.lemmas():            
+            classifier = timbl.TimblClassifier(lemma +'.' + pos + '.' + self.targetlang, timbloptions)
+            out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
+            out_oot = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oot','w','utf-8')
+                
+            for instancenum, (id, leftcontext,head,rightcontext) in enumerate(self.testdata.instances(lemma,pos)):
+                print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
+                
+                sourcewords_untok = leftcontext + [head] + rightcontext
+                
+                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_untok)
+                
+                #find new head position (may have moved due to tokenisation)
+                origindex = len(leftcontext.split(' '))
+                mindistance = 9999
+                focusindex = -1
+                
+                for i, word in enumerate(sourcewords): 
+                    if word == head:
+                        distance = abs(origindex - i)
+                        if distance <= mindistance:
+                            focusindex = i
+                            mindistance = distance 
+                           
+                if focusindex == -1: 
+                    raise Exception("Focus word not found after tokenisation! This should not happen!")
+                         
+                #grab local context features
+                features = []                    
+                for j in range(focusindex - self.contextsize, focusindex + len(sourcewords) + self.contextsize):
+                    if j > 0 and j < focusindex + len(sourcewords):
+                        features.append(sourceword[j])
+                        if self.DOPOS: features.append(sourcepostags[j])
+                        if self.DOLEMMAS: features.append(sourcelemmas[j])
+                    else:
+                        features.append("{NULL}")
+                        if self.DOPOS: features.append("{NULL}")
+                        if self.DOLEMMAS: features.append("{NULL}")     
+                                            
+                _, distribution, distance = classifier.classify(features)
+                
+                bestscore = max(distribution.values())
+                bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
+                tenbestsenses = [ sense for sense, score in sorted(distribution.items()[:10], key=lambda x: -1 * x[1]) ]                                  
+                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(bestsenses) + ';\n')
+                out_oot.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(tenbestsenses) + ';\n')
+                
+                print >>sys.stderr, "\t" + distribution
+                
+            out_best.close()
+            out_oot.close()
+                
+                 
+                
+                
+        
+        
 if __name__ == "__main__":
     try:
 	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:R", ["train","Stagger=","Ttagger="])
