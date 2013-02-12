@@ -2,7 +2,7 @@
 # -*- coding: utf8 -*-
 
 import codecs
-
+import os
 data = {}
 
 f = codecs.open('data/targetwords','r','utf-8')
