@@ -315,7 +315,7 @@ class CLWSD2Tester(object):
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
                 tenbestsenses = [ sense for sense, score in sorted(distribution.items()[:10], key=lambda x: -1 * x[1]) ]                                  
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(bestsenses) + ';\n')
-                out_oot.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(tenbestsenses) + ';\n')
+                out_oot.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' ::: ' + ';'.join(tenbestsenses) + ';\n')
                 
                 print >>sys.stderr, "\t" + distribution
                 
