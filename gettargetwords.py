@@ -33,4 +33,5 @@ for root, dirs, files in os.walk(sys.argv[1]):
             
 for lemma,pos in targetwords:
     for lang in targetwords[(lemma,pos)]:
-        print lemma.encode('utf-8') + '\t' + pos + '\t' + lang + '\t' + ';'.join([ sense.encode('utf-8') for sense in sorted(targetwords[(lemma,pos)][lang])])         
+        s =  lemma + '\t' + pos + '\t' + lang + '\t' + ';'.join([ sense for sense in sorted(targetwords[(lemma,pos)][lang])])         
+        print s.encode('utf-8')
