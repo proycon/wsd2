@@ -139,13 +139,15 @@ def loadtargetwords(targetwordsfile):
             
     return targetwords
 
-def targetmatch(lang, target, senses): 
+def targetmatch(target, senses): 
     target = target.lower()
     for sense in senses:
         if target == sense.lower():
             return sense
-        elif target[:-len(sense) - 1] == sense.lower()[:-1] and len(sense) - len(target) <= 6:  #very crude stemmer
-            return sense
+    if not ' ' in target:
+        for sense in senses:
+            if target[:-len(sense) - 1] == sense.lower()[:-1] and len(sense) - len(target) <= 6:  #very crude stem check 
+                return sense
     return None
         
 
@@ -222,7 +224,7 @@ class CLWSD2Trainer(object):
                     for target, Pst, Pts,_ in translationoptions:
 
                         #is this target an actual sense we suppport or a variant thereof?
-                        target = targetmatch(self.targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
+                        target = targetmatch(targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
                         if target:    
                             found = False
                             n = len(target.split(" "))
