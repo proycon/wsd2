@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
+import codecs
+
 data = {}
 
 f = codecs.open('data/targetwords','r','utf-8')
