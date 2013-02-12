@@ -18,6 +18,8 @@ for lang, senses in data.items():
     if not os.path.exists('data/' + lang + '.variants'):
         f = codecs.open('data/' + lang + '.variants','w','utf-8')
         for sense in sorted(senses):
-            f.write(sense + '\n')
+            sense = sense.strip()
+            if sense:
+                f.write(sense + '\n')
         f.close()    
         
