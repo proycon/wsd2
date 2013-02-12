@@ -12,7 +12,8 @@ import timbl
 
 def usage():
     """Print usage instructions"""
-    print >> sys.stderr,"Usage: wsd2.py --train -s [source-text] -t [target-text] -m [moses-phrasetable] -w [targetwords-file]"
+    print >> sys.stderr,"Usage: wsd2.py --train -L [lang] -s [source-text] -t [target-text] -m [moses-phrasetable] -w [targetwords-file] -o [outputdir] -O [timbloptions]"
+    print >> sys.stderr,"       wsd2.py --test -L [lang] -T [testdir] -w [targetwords-file] -o [outputdir] -O [timbloptions]"
     print >> sys.stderr," -c [int]   context size"
     print >> sys.stderr," -l         add lemmatisation features"
     print >> sys.stderr," -p         add PoS-tag features"    
@@ -368,7 +369,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:R", ["train","test", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:", ["train","test", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -377,11 +378,17 @@ if __name__ == "__main__":
     
     TRAIN = TEST = False
     sourcefile = targetfile = phrasetablefile = ""
+    targetwordsfile = "data/targetwords"
     DOLEMMAS = False
     DOPOS = False
     sourcetagger = None
     targettagger = None
-    	    
+    outputdir = "."
+    testdir = "data/trial"
+    targetlang = ""
+    exemplarweights = False
+    timbloptions = "-a 0 -k 1"
+    
     for o, a in opts:
         if o == "--train":	
             TRAIN = True
@@ -405,14 +412,33 @@ if __name__ == "__main__":
             DOLEMMAS = True
         elif o == "--Stagger":
             sourcetagger = Tagger(*a.split(':'))
-        elif o == "--Ttagger":
-            targettagger = Tagger(*a.split(':'))
+        elif o == '-o':
+            outputdir = a
+        elif o == '-w':
+            targetwordsfile = a
+        elif o == '-L':
+            targetlang = a   
+        elif o == '-T':
+            testdir = a
+        elif o == '-O':
+            timbloptions = a
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
             
-    
-    
+    if not targetlang:            
+        print >>sys.stderr, "ERROR: No target language specified"
+        sys.exit(2)
+        
+    if TRAIN:
+        if not phrasetablefile:
+            print >>sys.stderr, "ERROR: No phrasetable file specified"
+            sys.exit(2)            
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, exemplarweights)
+        
+    if TEST:
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS)
+        
     
     
     
