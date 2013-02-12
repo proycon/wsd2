@@ -132,8 +132,11 @@ def loadtargetwords(targetwordsfile):
     f = codecs.open(targetwordsfile, 'r','utf-8')
     for line in f:
         if line.strip() and line[0] != '#':
-            lemma,pos = line.strip().split('\t')
-            targetwords.add( (lemma,pos) )
+            lemma,pos,lang,senses = line.strip().split('\t')
+            if not (lemma,pos) in targetwords: 
+                targetwords[(lemma,pos)] = {}
+            targetwords[(lemma,pos)][lang] = senses.split(';')
+            
     return targetwords
 
     
@@ -208,7 +211,11 @@ class CLWSD2Trainer(object):
                     #which of the translation options actually occurs in the target sentence?
                     for target, Pst, Pts,_ in translationoptions:
                         
-                        targetword = ""
+                        target = target.lower()
+                        
+                        #TODO: is this target an actual sense or variant thereof?
+                        
+                        
                         
                         found = False
                         n = len(target.split(" "))
@@ -217,7 +224,7 @@ class CLWSD2Trainer(object):
                                 found = True
                                 print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
                                 if not (sourcelemma,sourcepos) in self.classifiers:
-                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
                             
                                 self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
 
@@ -231,26 +238,44 @@ class CLWSD2Trainer(object):
         print >>sys.stderr, "Training classifiers"
         for classifier in self.classifiers:
             self.classifiers[classifier].train()
-            
+
+        for f in glob.glob(self.outputdir + '/*.train'):
+            os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch"
         
-        #TODO: paramsearch    
         
-  
+def paramsearch2timblargs(filename):
+    f = open(filename)
+    for line in f:
+        opts = ""
+        for field in line.split("."):
+            if field in ("IB1","IG","TRIBL","IB2","TRIBL2"):
+                opts += "-a " + field
+            elif field in ("M","C","D","DC","L","J","N","I","O"):
+                opts += " -m " + field
+            elif field in ("nw","gr","ig","x2","sv"):
+                opts += " -w " + field
+            elif field in ("Z","IL") or field[0:3] == "ED:":
+                opts += " -d " + field
+            elif len(field) >= 2 and field[0] == "L" and field[1:].isdigit():
+                opts += " -L " + field[1:]                
+            elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
+                opts += " -k " + field[1:]        
+        print opts
+    f.close()
+    return opts
+
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, timbloptions):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS):        
         self.sourcetagger = sourcetagger
         
         
         print >>sys.stderr, "Loading Target Words " + targetwordsfile       
         self.targetwords = loadtargetwords(targetwordsfile)
-        self.testdata = {}
         self.classifiers = {}
         
         self.targetlang = targetlang
         
-        self.testdata[(lemma,pos)] = TestSet(testdir+"/" + lemma + '.data')
-
         self.contextsize = contextsize
         self.DOPOS = DOPOS
         self.DOLEMMAS = DOLEMMAS
@@ -270,8 +295,13 @@ class CLWSD2Tester(object):
        
     def run(self):
         print >>sys.stderr, "Extracting features from testset"
-        for lemma,pos in self.testdata.lemmas():            
-            classifier = timbl.TimblClassifier(lemma +'.' + pos + '.' + self.targetlang, timbloptions)
+        for lemma,pos in self.testset.lemmas():            
+
+            timbloptions = self.timbloptions 
+            if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch'):
+                timbloptions += " " + paramsearch2timblargs(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch')            
+            
+            classifier = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)
             out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
             out_oot = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oot','w','utf-8')
                 
@@ -329,7 +359,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:R", ["train","Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:R", ["train","test", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -346,6 +376,8 @@ if __name__ == "__main__":
     for o, a in opts:
         if o == "--train":	
             TRAIN = True
+        elif o == "--train":	
+            TEST = True            
         elif o == "-s":
             sourcefile = a
             if not os.path.exists(sourcefile):
