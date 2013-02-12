@@ -139,6 +139,16 @@ def loadtargetwords(targetwordsfile):
             
     return targetwords
 
+def targetmatch(lang, target, senses): 
+    target = target.lower()
+    for sense in senses:
+        if target == sense.lower():
+            return sense
+        elif target[:-len(sense) - 1] == sense.lower()[:-1] and len(sense) - len(target) <= 6:  #very crude stemmer
+            return sense
+    return None
+        
+
     
 class CLWSD2Trainer(object):    
     
@@ -210,23 +220,20 @@ class CLWSD2Trainer(object):
                     
                     #which of the translation options actually occurs in the target sentence?
                     for target, Pst, Pts,_ in translationoptions:
-                        
-                        target = target.lower()
-                        
-                        #TODO: is this target an actual sense or variant thereof?
-                        
-                        
-                        
-                        found = False
-                        n = len(target.split(" "))
-                        for j in range(0,len(targetwords)):
-                            if " ".join(targetwords[j:j+n]) == target:
-                                found = True
-                                print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
-                                if not (sourcelemma,sourcepos) in self.classifiers:
-                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
-                            
-                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
+
+                        #is this target an actual sense we suppport or a variant thereof?
+                        target = targetmatch(self.targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
+                        if target:    
+                            found = False
+                            n = len(target.split(" "))
+                            for j in range(0,len(targetwords)):
+                                if " ".join(targetwords[j:j+n]) == target:
+                                    found = True
+                                    print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
+                                    if not (sourcelemma,sourcepos) in self.classifiers:
+                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                                
+                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
 
                      
                     print >>sys.stderr                           
@@ -240,7 +247,7 @@ class CLWSD2Trainer(object):
             self.classifiers[classifier].train()
 
         for f in glob.glob(self.outputdir + '/*.train'):
-            os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch"
+            os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch")
         
         
 def paramsearch2timblargs(filename):
