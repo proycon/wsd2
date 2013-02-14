@@ -25,7 +25,7 @@ def usage():
     print >> sys.stderr,"          3) Filter out words with a global corpus occurence less than x"
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
-    #print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel], start the tagger server manually first"
+    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
     
 class Tagger(object):    
      def __init__(self, *args):        
@@ -39,6 +39,29 @@ class Tagger(object):
         elif args[0] == "corenlp":
             self.mode = "corenlp"
             self.tagger = corenlp.StanfordCoreNLP()            
+        elif args[0] == "de.lex":
+            self.mode = "lookup"
+            self.tagger = {}
+            f = codecs.open("data/lex/de.lex",'r')
+            for line in f:
+                fields = line.split('\t')
+                wordform = fields[0].lower()
+                lemma = fields[4].split('.')[0]
+                self.tagger[wordform] = (lemma, 'n')
+            f.close()
+        elif args[0] == "fr.lex":
+            self.mode = "tablelookup"
+            self.tagger = {}
+            f = codecs.open("data/lex/fr.lex",'r')
+            for line in f:
+                fields = line.split('\t')
+                wordform = fields[0].lower()                
+                lemma = fields[1]
+                if lemma == '=': 
+                    lemma == fields[0]
+                pos = fields[2][0].lower()
+                self.tagger[wordform] = (lemma, pos)
+            f.close()
         else:
             raise Exception("Invalid mode: " + args[0])
         
@@ -58,9 +81,18 @@ class Tagger(object):
                 for word, worddata in sentence['words']:
                     words.append(word)
                     lemmas.append(worddata['Lemma'])
-                    postags.append(worddata['PartOfSpeech'])
+                    postags.append(worddata['PartOfSpeech'][0].lower())
             return words, pos, lemmas
-            
+        elif self.mode == 'tablelookup':
+            postags = []
+            lemmas = []
+            for word in words:
+                try:
+                    lemma, pos = self.tagger[word.lower()]
+                except KeyError: 
+                    lemmas.append(word)
+                    pos.append('?')
+             
             
 class TestSet(object):
     languages = {
@@ -133,11 +165,19 @@ def loadtargetwords(targetwordsfile):
     f = codecs.open(targetwordsfile, 'r','utf-8')
     for line in f:
         if line.strip() and line[0] != '#':
-            lemma,pos,lang,senses = line.strip().split('\t')
-            if not (lemma,pos) in targetwords: 
-                targetwords[(lemma,pos)] = {}
-            targetwords[(lemma,pos)][lang] = senses.split(';')
-            
+            fields = line.strip().split('\t')
+            if len(fields) == 4:
+                lemma,pos,lang,senses = fields.split('\t')            
+                if not (lemma,pos) in targetwords: 
+                    targetwords[(lemma,pos)] = {}
+                targetwords[(lemma,pos)][lang] = senses.split(';')
+            elif len(fields) == 2:
+                lemma,pos = fields.split('\t')
+                targetwords[(lemma,pos)] = True
+            else:
+                raise Exception("Invalid format in targetwords")
+                
+                
     return targetwords
 
 def targetmatch(target, senses): 
@@ -224,19 +264,22 @@ class CLWSD2Trainer(object):
                     #which of the translation options actually occurs in the target sentence?
                     for target, Pst, Pts,_ in translationoptions:
 
-                        #is this target an actual sense we suppport or a variant thereof?
-                        target = targetmatch(targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
-                        if target:    
-                            found = False
-                            n = len(target.split(" "))
-                            for j in range(0,len(targetwords)):
-                                if " ".join(targetwords[j:j+n]) == target:
-                                    found = True
-                                    print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
-                                    if not (sourcelemma,sourcepos) in self.classifiers:
-                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
-                                
-                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
+                        #is this target an actual sense we support or a variant thereof?
+                        #target = targetmatch(targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
+                        #if target:    
+            
+                        #target = lemmatize(target) #TODO!!!!!!!!                            
+                        
+                        found = False
+                        n = len(target.split(" "))
+                        for j in range(0,len(targetwords)):
+                            if " ".join(targetwords[j:j+n]) == target:
+                                found = True
+                                print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
+                                if not (sourcelemma,sourcepos) in self.classifiers:
+                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                            
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
 
                      
                     print >>sys.stderr                           
@@ -306,6 +349,7 @@ class CLWSD2Tester(object):
     def run(self):
         print >>sys.stderr, "Extracting features from testset"
         for lemma,pos in self.testset.lemmas():            
+            print >>sys.stderr, "Processing " + lemma.encode('utf-8')
 
             timbloptions = self.timbloptions 
             if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch'):
@@ -436,9 +480,11 @@ if __name__ == "__main__":
             print >>sys.stderr, "ERROR: No phrasetable file specified"
             sys.exit(2)            
         trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, exemplarweights)
+        trainer.run()
         
     if TEST:
         tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS)
+        tester.run()
         
     
     
