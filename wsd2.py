@@ -11,6 +11,7 @@ from pynlpl.clients.frogclient import FrogClient
 from pynlpl.clients.freeling import FreeLingClient
 import corenlp
 import timbl
+import glob
 
 def usage():
     """Print usage instructions"""
@@ -245,7 +246,7 @@ class CLWSD2Trainer(object):
         self.classifiers = {}
         
         
-    def run():        
+    def run(self):        
         print >>sys.stderr, "Reading texts and extracting features"
         f_source = codecs.open(self.sourcefile,'r','utf-8')
         f_target = codecs.open(self.targetfile,'r','utf-8')
@@ -261,7 +262,7 @@ class CLWSD2Trainer(object):
             
             for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
 
-                if (sourcelemma, sourcepos) in targetwords and sourceword in phrasetable:
+                if (sourcelemma, sourcepos) in targetwords and sourceword in self.phrasetable:
                     
                     print >>sys.stderr, "@" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
                     #grab local context features
@@ -278,7 +279,10 @@ class CLWSD2Trainer(object):
                     
                     
                     #find options in phrasetable
-                    translationoptions = phrasetable[sourceword]  #[ (target, Pst, Pts, null_alignments) ]
+                    try:
+                        translationoptions = self.phrasetable[sourceword]  #[ (target, Pst, Pts, null_alignments) ]
+                    except KeyError:
+                        continue
                     
                     
                     #which of the translation options actually occurs in the target sentence?
@@ -310,7 +314,7 @@ class CLWSD2Trainer(object):
                             else:
                                 target = targetlemmas[foundindex] 
                             
-                            print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
+                            print >>sys.stderr, "\t" + target.encode('utf-8')                                
                             if not (sourcelemma,sourcepos) in self.classifiers:
                                 #init classifier
                                 self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
@@ -421,7 +425,7 @@ class CLWSD2Tester(object):
                 features = []                    
                 for j in range(focusindex - self.contextsize, focusindex + len(sourcewords) + self.contextsize):
                     if j > 0 and j < focusindex + len(sourcewords):
-                        features.append(sourceword[j])
+                        features.append(sourcewords[j])
                         if self.DOPOS: features.append(sourcepostags[j])
                         if self.DOLEMMAS: features.append(sourcelemmas[j])
                     else:
@@ -469,6 +473,7 @@ if __name__ == "__main__":
     targetlang = ""
     exemplarweights = False
     timbloptions = "-a 0 -k 1"
+    contextsize = 0
     
     for o, a in opts:
         if o == "--train":	
@@ -499,6 +504,8 @@ if __name__ == "__main__":
             outputdir = a
         elif o == '-w':
             targetwordsfile = a
+        elif o == '-c':
+            contextsize = int(a)
         elif o == '-L':
             targetlang = a   
         elif o == '-T':
