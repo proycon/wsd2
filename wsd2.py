@@ -8,6 +8,7 @@ import codecs
 from lxml import etree as ElementTree
 from pynlpl.formats.moses import PhraseTable
 from pynlpl.clients.frogclient import FrogClient
+from pynlpl.clients.freeling import FreeLingClient
 import corenlp
 import timbl
 
@@ -37,7 +38,8 @@ class Tagger(object):
             self.tagger = FrogClient('localhost',port)                
         elif args[0] == "freeling":
             self.mode = "freeling"
-            self.channel = int(args[1])
+            channel = args[1]
+            self.tagger = FreeLingClient(channel)            
         elif args[0] == "corenlp":
             self.mode = "corenlp"
             print >>sys.stderr, "Initialising Stanford Core NLP"
@@ -82,8 +84,13 @@ class Tagger(object):
                 lemmas.append(lemma)
             return newwords, pos, lemmas                
         elif self.mode == "freeling":
-            #TODO
-            raise NotImplemented
+            postags = []
+            lemmas = []
+            for fields in self.tagger.process(words):
+                word, lemma,pos = fields[:3]
+                postags.append(pos)
+                lemmas.append(lemma)
+            return words, pos, lemmas            
         elif self.mode == "corenlp":            
             data = self.tagger.parse(" ".join(words))
             words = []
