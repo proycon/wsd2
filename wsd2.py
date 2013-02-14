@@ -313,7 +313,7 @@ class CLWSD2Tester(object):
             
             classifier = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)
             out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
-            out_oot = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oot','w','utf-8')
+            out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
             for instancenum, (id, leftcontext,head,rightcontext) in enumerate(self.testdata.instances(lemma,pos)):
                 print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
@@ -353,21 +353,19 @@ class CLWSD2Tester(object):
                 
                 bestscore = max(distribution.values())
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
-                tenbestsenses = [ sense for sense, score in sorted(distribution.items()[:10], key=lambda x: -1 * x[1]) ]                                  
+                fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]                                  
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(bestsenses) + ';\n')
-                out_oot.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' ::: ' + ';'.join(tenbestsenses) + ';\n')
+                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
                 
                 print >>sys.stderr, "\t" + distribution
                 
             out_best.close()
-            out_oot.close()
+            out_oof.close()
                 
             #score
-            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/dev/' + self.targetlang + '/' + lemma + '_gold.txt')
-            os.system('ScorerTask3.pl -t oot ' + outputdir + '/' + lemma + '.' + pos + '.oot' + ' data/dev/' + self.targetlang + '/' + lemma + '_gold.txt')
+            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt')
+            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof')
                  
-                
-                
         
         
 if __name__ == "__main__":
