@@ -362,6 +362,9 @@ class CLWSD2Tester(object):
             out_best.close()
             out_oot.close()
                 
+            #score
+            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/dev/' + self.targetlang + '/' + lemma + '_gold.txt')
+            os.system('ScorerTask3.pl -t oot ' + outputdir + '/' + lemma + '.' + pos + '.oot' + ' data/dev/' + self.targetlang + '/' + lemma + '_gold.txt')
                  
                 
                 
