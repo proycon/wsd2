@@ -33,14 +33,17 @@ class Tagger(object):
         self.tagger = None
         if args[0] == "frog":
             self.mode = "frog"
-            self.port = int(args[1])
+            port = int(args[1])
+            self.tagger = FrogClient('localhost',port)                
         elif args[0] == "freeling":
             self.mode = "freeling"
             self.channel = int(args[1])
         elif args[0] == "corenlp":
             self.mode = "corenlp"
+            print >>sys.stderr, "Initialising Stanford Core NLP"
             self.tagger = corenlp.StanfordCoreNLP()            
         elif args[0] == "de.lex":
+            print >>sys.stderr, "Reading de.lex"
             self.mode = "lookup"
             self.tagger = {}
             f = codecs.open("data/lex/de.lex",'r')
@@ -51,6 +54,7 @@ class Tagger(object):
                 self.tagger[wordform] = (lemma, 'n')
             f.close()
         elif args[0] == "fr.lex":
+            print >>sys.stderr, "Reading de.lex"
             self.mode = "tablelookup"
             self.tagger = {}
             f = codecs.open("data/lex/fr.lex",'r')
@@ -68,8 +72,15 @@ class Tagger(object):
         
      def process(self, words):
         if self.mode == "frog":
-            #TODO
-            raise NotImplemented
+            newwords = []
+            postags = []
+            lemmas = []             
+            for fields in self.tagger.process(' '.join(words)):
+                word,lemma,morph,pos = fields[:4]
+                newwords.append(word)
+                postags.append(pos[0].lower()) #will work for nouns
+                lemmas.append(lemma)
+            return newwords, pos, lemmas                
         elif self.mode == "freeling":
             #TODO
             raise NotImplemented
@@ -93,7 +104,7 @@ class Tagger(object):
                 except KeyError: 
                     lemmas.append(word)
                     pos.append('?')
-             
+            return words, pos, lemmas
             
 class TestSet(object):
     languages = {
