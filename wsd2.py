@@ -7,6 +7,7 @@ import os
 import codecs
 from lxml import etree as ElementTree
 from pynlpl.formats.moses import PhraseTable
+from pynlpl.clients.frogclient import FrogClient
 import corenlp
 import timbl
 
@@ -195,7 +196,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, exemplarweights):      
+    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -208,7 +209,7 @@ class CLWSD2Trainer(object):
         self.targetfile = targetfile
         
         self.sourcetagger = sourcetagger
-        
+        self.targettagger = targettagger
         
         print >>sys.stderr, "Loading Target Words " + targetwordsfile
         self.targetwords = loadtargetwords(targetwordsfile)
@@ -237,8 +238,8 @@ class CLWSD2Trainer(object):
             sourcewords = sourceline.split()
             targetwords = targetline.split()
             
-            sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords)
-            #targetpostags, targetlemmas = targettagger.process(targetwords)            
+            sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
+            targetpostags, targetlemmas = None            
             
             for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
 
@@ -261,25 +262,42 @@ class CLWSD2Trainer(object):
                     #find options in phrasetable
                     translationoptions = phrasetable[sourceword]  #[ (target, Pst, Pts, null_alignments) ]
                     
+                    
                     #which of the translation options actually occurs in the target sentence?
                     for target, Pst, Pts,_ in translationoptions:
 
-                        #is this target an actual sense we support or a variant thereof?
-                        #target = targetmatch(targetlang, target, targetwords[(lemma,pos)][self.targetlang])                            
-                        #if target:    
-            
-                        #target = lemmatize(target) #TODO!!!!!!!!                            
-                        
-                        found = False
-                        n = len(target.split(" "))
-                        for j in range(0,len(targetwords)):
-                            if " ".join(targetwords[j:j+n]) == target:
-                                found = True
-                                print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
-                                if not (sourcelemma,sourcepos) in self.classifiers:
-                                    self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+
+                        #check if and where it occurs in target sense
+                        foundindex = -1
+                        if ' ' in target:
+                            targetl = target.split(' ')
+                            for j in range(0,len(targetwords) - len(targetl)):
+                                if targetwords[j:j+len(targetl)] == targetl: 
+                                    foundindex = j
+                                    break                            
+                        else:
+                            for w in enumerate(targetwords):
+                                if target == w:
+                                    foundindex = j
+                                    break
+                                                
+                        if foundindex != -1: 
+                            #tag and lemmatise target sentence if not done yet
+                            if targetpostags is None or targetlemmas is None:
+                                _, targetpostags, targetlemmas = self.targettagger.process(targetwords)
                             
-                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
+                            #get lemmatised form of target word
+                            if ' ' in target:
+                                target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
+                            else:
+                                target = targetlemmas[foundindex] 
+                            
+                            print >>sys.stderr, "\t" + targetword.encode('utf-8')                                
+                            if not (sourcelemma,sourcepos) in self.classifiers:
+                                #init classifier
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                        
+                            self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
 
                      
                     print >>sys.stderr                           
@@ -457,6 +475,8 @@ if __name__ == "__main__":
             DOLEMMAS = True
         elif o == "--Stagger":
             sourcetagger = Tagger(*a.split(':'))
+        elif o == "--Ttagger":
+            targettagger = Tagger(*a.split(':'))            
         elif o == '-o':
             outputdir = a
         elif o == '-w':
@@ -479,7 +499,7 @@ if __name__ == "__main__":
         if not phrasetablefile:
             print >>sys.stderr, "ERROR: No phrasetable file specified"
             sys.exit(2)            
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, contextsize, DOPOS, DOLEMMAS, exemplarweights)
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights)
         trainer.run()
         
     if TEST:
