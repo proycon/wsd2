@@ -47,7 +47,7 @@ class Tagger(object):
         elif args[0] == "corenlp":
             self.mode = "corenlp"
             print >>sys.stderr, "Initialising Stanford Core NLP"
-            self.tagger = corenlp.StanfordCoreNLP()            
+            self.tagger = corenlp.StanfordCoreNLP()                        
         elif args[0] == "de.lex":
             print >>sys.stderr, "Reading de.lex"
             self.mode = "lookup"
