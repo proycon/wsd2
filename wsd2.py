@@ -103,7 +103,6 @@ class Tagger(object):
             words = []
             postags = []
             lemmas = []
-            print >>sys.stderr,repr(data)
             for sentence in data['sentences']:
                 for word, worddata in sentence['words']:
                     words.append(word)
@@ -332,14 +331,15 @@ class CLWSD2Trainer(object):
             print >>sys.stderr, "Reading texts and extracting features"
             f_source = codecs.open(self.sourcefile,'r','utf-8')
             f_target = codecs.open(self.targetfile,'r','utf-8')            
-            for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):
+            for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                
                 sourceline = sourceline.strip()
                 targetline = targetline.strip()
                 sourcewords = sourceline.split()
                 targetwords = targetline.split()
                 
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
-                targetpostags, targetlemmas = None            
+                targetpostags = None
+                targetlemmas = None            
                 
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
 
