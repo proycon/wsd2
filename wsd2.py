@@ -13,7 +13,7 @@ import corenlp
 import timbl
 import glob
 
-WSDDIR = os.path.basename(__file__)
+WSDDIR = os.path.dirname(__file__)
 
 def usage():
     """Print usage instructions"""
