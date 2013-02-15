@@ -102,6 +102,7 @@ class Tagger(object):
             words = []
             postags = []
             lemmas = []
+            print >>sys.stderr,repr(data)
             for sentence in data['sentences']:
                 for word, worddata in sentence['words']:
                     words.append(word)
