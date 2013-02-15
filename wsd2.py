@@ -341,7 +341,7 @@ class CLWSD2Trainer(object):
                 targetpostags = None
                 targetlemmas = None            
                 
-                for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
+                for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
 
                     if (sourcelemma, sourcepos) in targetwords and sourceword in self.phrasetable:
                                             
@@ -413,7 +413,7 @@ class CLWSD2Trainer(object):
                                             bag[keylemma,keypos] = 0
                                         
                                         #now count the words in our context
-                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):
+                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
                                             if (contextlemma, contextpos) in bag:
                                                 bag[(contextlemma,contextpos)] = 1
 
@@ -430,7 +430,7 @@ class CLWSD2Trainer(object):
                                     if not target in count[(sourcelemma, sourcepos)]:
                                         count[(sourcelemma,sourcepos)][target] = {}
                                         
-                                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):
+                                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
                                         if j != i:
                                             if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
                                                 count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
