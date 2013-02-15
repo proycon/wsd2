@@ -186,7 +186,7 @@ class TestSet(object):
             raise KeyError
 
 def loadtargetwords(targetwordsfile):            
-    targetwords = set()
+    targetwords = {}
     f = codecs.open(targetwordsfile, 'r','utf-8')
     for line in f:
         if line.strip() and line[0] != '#':
