@@ -13,6 +13,8 @@ import corenlp
 import timbl
 import glob
 
+WSDDIR = os.path.basename(__file__)
+
 def usage():
     """Print usage instructions"""
     print >> sys.stderr,"Usage: wsd2.py --train -L [lang] -s [source-text] -t [target-text] -m [moses-phrasetable] -w [targetwords-file] -o [outputdir] -O [timbloptions]"
@@ -32,6 +34,7 @@ def usage():
     
 class Tagger(object):    
      def __init__(self, *args):        
+        global WSDDIR
         self.tagger = None
         if args[0] == "frog":
             self.mode = "frog"
@@ -49,7 +52,7 @@ class Tagger(object):
             print >>sys.stderr, "Reading de.lex"
             self.mode = "lookup"
             self.tagger = {}
-            f = codecs.open("data/lex/de.lex",'r')
+            f = codecs.open(WSDDIR + "/data/lex/de.lex",'r')
             for line in f:
                 fields = line.split('\t')
                 wordform = fields[0].lower()
@@ -60,7 +63,7 @@ class Tagger(object):
             print >>sys.stderr, "Reading de.lex"
             self.mode = "tablelookup"
             self.tagger = {}
-            f = codecs.open("data/lex/fr.lex",'r')
+            f = codecs.open(WSDDIR + "/data/lex/fr.lex",'r')
             for line in f:
                 fields = line.split('\t')
                 wordform = fields[0].lower()                
@@ -515,6 +518,7 @@ class CLWSD2Tester(object):
               
        
     def run(self):
+        global WSDDIR
         print >>sys.stderr, "Extracting features from testset"
         for lemma,pos in self.testset.lemmas():            
             print >>sys.stderr, "Processing " + lemma.encode('utf-8')
@@ -575,8 +579,8 @@ class CLWSD2Tester(object):
             out_oof.close()
                 
             #score
-            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt')
-            os.system('ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof')
+            os.system(WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt')
+            os.system(WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof')
                  
         
         
@@ -591,7 +595,7 @@ if __name__ == "__main__":
     
     TRAIN = TEST = False
     sourcefile = targetfile = phrasetablefile = ""
-    targetwordsfile = "data/targetwords"
+    targetwordsfile = WSDDIR + "/data/targetwords.trial"
     DOLEMMAS = False
     DOPOS = False
     sourcetagger = None
