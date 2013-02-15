@@ -586,7 +586,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:", ["train","test", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:m:", ["train","test", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -648,7 +648,7 @@ if __name__ == "__main__":
         elif o == '-T':
             testdir = a
         elif o == '-O':
-                timbloptions = a
+            timbloptions = a
         elif o == '-b':
             bagofwords = True
         elif o == "-B":
@@ -666,11 +666,17 @@ if __name__ == "__main__":
     if not targetlang:            
         print >>sys.stderr, "ERROR: No target language specified"
         sys.exit(2)
+    elif not sourcetagger:            
+        print >>sys.stderr, "ERROR: No source tagger specified"
+        sys.exit(2)            
         
     if TRAIN:
         if not phrasetablefile:
             print >>sys.stderr, "ERROR: No phrasetable file specified"
-            sys.exit(2)            
+            sys.exit(2)
+        elif not targettagger:            
+            print >>sys.stderr, "ERROR: No target tagger specified"
+            sys.exit(2)
         trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, bagofwords,bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         trainer.run()
         
