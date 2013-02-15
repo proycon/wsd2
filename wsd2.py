@@ -215,7 +215,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights):      
+    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, bagofwords,bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -245,88 +245,216 @@ class CLWSD2Trainer(object):
         self.outputdir = outputdir
         self.classifiers = {}
         
-        
+        self.bagofwords = bagofwords
+        self.bow_absolute_threshold = bow_absolute_threshold
+        self.bow_prob_threshold = bow_prob_threshold
+        self.bow_filter_threshold = bow_filter_threshold
+
+    def probability_sense_given_keyword(self, focuslemma,focuspos,senselabel, lemma,pos, count, totalcount):
+        if not focuslemma+'.'+focuspos in count:
+            print "focusword not seen", focuslemma +'.'+ focuspos
+            return 0 #focus word has not been counted for
+
+        if not senselabel in count[focuslemma+'.'+focuspos]:
+            print "sense not seen:", senselabel
+            return 0 #sense has never been seen for this focus word
+
+        if not lemma+'.'+pos in totalcount:
+            print "keyword not seen:", lemma+'.'+pos
+            return 0 #keyword has never been seen
+
+        Ns_kloc = 0.0
+        if lemma+'.'+pos in count[focuslemma+'.'+focuspos][senselabel]:
+            Ns_kloc = float(count[focuslemma+'.'+focuspos][senselabel][lemma+'.'+pos])        
+
+        Nkloc = 0
+        for sense in count[focuslemma+'.'+focuspos]:
+            if lemma+'.'+pos in count[focuslemma+'.'+focuspos][sense]:
+                Nkloc += count[focuslemma+'.'+focuspos][sense][lemma+'.'+pos]
+                
+
+        Nkcorp = float(totalcount[lemma+'.'+pos]) #/ float(totalcount_sum)
+
+        #if focuslemma == 'wild':
+        #    print "p = (",Ns_kloc,"/",Nkloc,") * 1/",Nkcorp, " = ",  (Ns_kloc / Nkloc) * (1/Nkcorp)
+
+        return (Ns_kloc / float(Nkloc)) * (1/Nkcorp)
+
+
+    def make_bag_of_words(self, focuslemma, focuspos, bow_absolute_threshold, count, totalcount):
+        print >>sys.stderr, "Computing and writing bag for ",focuslemma.encode('utf-8') + '.' + focuspos,"..."
+
+        if not focuslemma+'.'+focuspos in count:
+            return [] #focus word has not been counted for
+
+        bag = []
+        #select all words that occur at least 3 times for a sense, and have a probability_sense_given_keyword >= 0.001
+        for sense in count[(focuslemma,focuspos)]:
+            for lemma, pos in [ x.rsplit('.',1) for x in count[(focuslemma,focuspos)][sense].keys() ]:
+                 if (totalcount[(lemma,pos)] >= self.bow_filter_threshold): #filter very rare words (occuring less than 20 times)
+                     if count[(focuslemma,focuspos)][sense][(lemma,pos)] >= bow_absolute_threshold:
+                        p = self.probability_sense_given_keyword(focuslemma,focuspos,sense,lemma,pos) 
+                        if p >= self.bow_prob_threshold:
+                            bag.append( (lemma,pos, sense, count[(focuslemma,focuspos)][sense][(lemma,pos)], p) )
+
+        bag = sorted(bag)
+        f = codecs.open(self.outputdir+ '/' + focuslemma + '.' + focuspos+ '.' + self.targetlang + '.bag','w','utf-8')
+        for lemma,pos, sense, c, p in bag:
+            f.write(lemma + '\t' + pos + '\t' + sense + '\t' + str(c) + '\t' + str(p) + '\n')
+        f.close()
+
+        return bag
+
+
     def run(self):        
-        print >>sys.stderr, "Reading texts and extracting features"
-        f_source = codecs.open(self.sourcefile,'r','utf-8')
-        f_target = codecs.open(self.targetfile,'r','utf-8')
+
+        count = {}
+        totalcount = {}
+        bags = {} #will store bags of words
+                             
+        if self.bagofwords:
+            finalstage = False
+        else:
+            finalstage = True
         
-        for sentencenum, sourceline, targetline in enumerate(zip(f_source, f_target)):
-            sourceline = sourceline.strip()
-            targetline = targetline.strip()
-            sourcewords = sourceline.split()
-            targetwords = targetline.split()
-            
-            sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
-            targetpostags, targetlemmas = None            
-            
-            for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
+        
+        
 
-                if (sourcelemma, sourcepos) in targetwords and sourceword in self.phrasetable:
-                    
-                    print >>sys.stderr, "@" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
-                    #grab local context features
-                    features = []                    
-                    for j in range(i - self.contextsize, i + len(sourcewords) + self.contextsize):
-                        if j > 0 and j < i + len(sourcewords):
-                            features.append(sourceword[j])
-                            if self.DOPOS: features.append(sourcepostags[j])
-                            if self.DOLEMMAS: features.append(sourcelemmas[j])
-                        else:
-                            features.append("{NULL}")
-                            if self.DOPOS: features.append("{NULL}")
-                            if self.DOLEMMAS: features.append("{NULL}")                            
-                    
-                    
-                    #find options in phrasetable
-                    try:
-                        translationoptions = self.phrasetable[sourceword]  #[ (target, Pst, Pts, null_alignments) ]
-                    except KeyError:
-                        continue
-                    
-                    
-                    #which of the translation options actually occurs in the target sentence?
-                    for target, Pst, Pts,_ in translationoptions:
+        
+        while True:
+            print >>sys.stderr, "Reading texts and extracting features"
+            f_source = codecs.open(self.sourcefile,'r','utf-8')
+            f_target = codecs.open(self.targetfile,'r','utf-8')            
+            for sentencenum, sourceline, targetline in enumerate(zip(f_source, f_target)):
+                sourceline = sourceline.strip()
+                targetline = targetline.strip()
+                sourcewords = sourceline.split()
+                targetwords = targetline.split()
+                
+                sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
+                targetpostags, targetlemmas = None            
+                
+                for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):                
 
-
-                        #check if and where it occurs in target sense
-                        foundindex = -1
-                        if ' ' in target:
-                            targetl = target.split(' ')
-                            for j in range(0,len(targetwords) - len(targetl)):
-                                if targetwords[j:j+len(targetl)] == targetl: 
-                                    foundindex = j
-                                    break                            
-                        else:
-                            for w in enumerate(targetwords):
-                                if target == w:
-                                    foundindex = j
-                                    break
-                                                
-                        if foundindex != -1: 
-                            #tag and lemmatise target sentence if not done yet
-                            if targetpostags is None or targetlemmas is None:
-                                _, targetpostags, targetlemmas = self.targettagger.process(targetwords)
-                            
-                            #get lemmatised form of target word
-                            if ' ' in target:
-                                target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
-                            else:
-                                target = targetlemmas[foundindex] 
-                            
-                            print >>sys.stderr, "\t" + target.encode('utf-8')                                
-                            if not (sourcelemma,sourcepos) in self.classifiers:
-                                #init classifier
-                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                    if (sourcelemma, sourcepos) in targetwords and sourceword in self.phrasetable:
+                                            
+                        #find options in phrasetable
+                        try:
+                            translationoptions = self.phrasetable[sourceword]  #[ (target, Pst, Pts, null_alignments) ]
+                        except KeyError:
+                            continue
                         
-                            self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(features, target)
+                        
+                        print >>sys.stderr, "@" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
+                        
+                        #grab local context features
+                        localfeatures = [] 
+                        for j in range(i - self.contextsize, i + len(sourcewords) + self.contextsize):
+                            if j > 0 and j < i + len(sourcewords):
+                                localfeatures.append(sourceword[j])
+                                if self.DOPOS: localfeatures.append(sourcepostags[j])
+                                if self.DOLEMMAS: localfeatures.append(sourcelemmas[j])
+                            else:
+                                localfeatures.append("{NULL}")
+                                if self.DOPOS: localfeatures.append("{NULL}")
+                                if self.DOLEMMAS: localfeatures.append("{NULL}")                            
+                        
+                        
+                        
+                        #which of the translation options actually occurs in the target sentence?
+                        for target, Pst, Pts,_ in translationoptions:
 
-                     
-                    print >>sys.stderr                           
 
-        f_source.close()
-        f_target.close()
-        
+                            #check if and where it occurs in target sense
+                            foundindex = -1
+                            if ' ' in target:
+                                targetl = target.split(' ')
+                                for j in range(0,len(targetwords) - len(targetl)):
+                                    if targetwords[j:j+len(targetl)] == targetl: 
+                                        foundindex = j
+                                        break                            
+                            else:
+                                for w in enumerate(targetwords):
+                                    if target == w:
+                                        foundindex = j
+                                        break
+                                                    
+                            if foundindex != -1: 
+                                #tag and lemmatise target sentence if not done yet
+                                if targetpostags is None or targetlemmas is None:
+                                    _, targetpostags, targetlemmas = self.targettagger.process(targetwords)
+                                
+                                #get lemmatised form of target word
+                                if ' ' in target:
+                                    target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
+                                else:
+                                    target = targetlemmas[foundindex] 
+                                
+                                print >>sys.stderr, "\t" + target.encode('utf-8')
+                                if finalstage:                                
+                                    if not (sourcelemma,sourcepos) in self.classifiers:
+                                        #init classifier
+                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                                
+                                    
+                                    
+                                    if self.bagofwords:                                        
+                                        globalfeatures = []
+                                        #create new bag
+                                        bag = {}
+                                        for keylemma,keypos,_,_,_ in bags[(sourcelemma, sourcepos)]:
+                                            bag[keylemma,keypos] = 0
+                                        
+                                        #now count the words in our context
+                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):
+                                            if (contextlemma, contextpos) in bag:
+                                                bag[(contextlemma,contextpos)] = 1
+
+                                        #and output the bag of words features
+                                        for contextlemma, contextpos in sorted(bag.keys()):
+                                            globalfeatures.append(bag[(contextlemma,contextpos)])                                         
+                                        
+                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures + globalfeatures, target)
+                                        
+                                    else:
+                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
+                                        
+                                elif self.bagofwords:
+                                    if not target in count[(sourcelemma, sourcepos)]:
+                                        count[(sourcelemma,sourcepos)][target] = {}
+                                        
+                                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepos, sourcelemma)):
+                                        if j != i:
+                                            if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
+                                                count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
+                                            else:
+                                                count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1                                    
+                         
+                        print >>sys.stderr                           
+
+            f_source.close()
+            f_target.close()
+            if finalstage:
+                break
+            elif self.bagofwords:
+                for lemma,pos in count.keys():        
+                    if self.compute_bow_params:
+                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, self.bow_absolute_threshold,  count, totalcount)            
+                        absthreshold = self.bow_absolute_threshold
+                        if len(bags[(lemma,pos)]) <= 5:
+                            #too few results, loosen parameters
+                            while len(bags[(lemma,pos)]) <= 5 and absthreshold > 1:
+                                absthreshold = absthreshold - 1
+                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, absthreshold, count, totalcount)    
+                        elif len(bags[(lemma,pos)]) >= 500:
+                            #too many results, tighten parameters
+                            while len(bags[(lemma,pos)]) >= 500:
+                                absthreshold = absthreshold + 1
+                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, absthreshold, count, totalcount)                            
+                    else:
+                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,outputdir, self.bow_absolute_threshold,  count, totalcount)                
+                finalstage = True
+            
         
         print >>sys.stderr, "Training classifiers"
         for classifier in self.classifiers:
@@ -475,6 +603,11 @@ if __name__ == "__main__":
     timbloptions = "-a 0 -k 1"
     contextsize = 0
     
+    bagofwords = False
+    bow_absolute_threshold = 3 #Bag-of-word needs to occur at least x times in context
+    bow_prob_threshold = 0.001 #Bag-of-word needs to have sense|keyword probability of at least x
+    bow_filter_threshold = 20 #Filter out words with a global corpus occurence less than x
+    
     for o, a in opts:
         if o == "--train":	
             TRAIN = True
@@ -511,7 +644,17 @@ if __name__ == "__main__":
         elif o == '-T':
             testdir = a
         elif o == '-O':
-            timbloptions = a
+                timbloptions = a
+        elif o == '-b':
+            bagofwords = True
+        elif o == "-B":
+            fields = a.split(",")
+            if len(fields) >= 1:
+               bow_absolute_threshold = int(fields[0])
+            if len(fields) >= 2:
+               bow_prob_threshold = float(fields[1])
+            if len(fields) >= 3:
+               bow_filter_threshold = int(fields[2])             
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
@@ -524,13 +667,9 @@ if __name__ == "__main__":
         if not phrasetablefile:
             print >>sys.stderr, "ERROR: No phrasetable file specified"
             sys.exit(2)            
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights)
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, bagofwords,bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         trainer.run()
         
     if TEST:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords)
         tester.run()
-        
-    
-    
-    
