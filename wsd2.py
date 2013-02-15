@@ -59,6 +59,7 @@ class Tagger(object):
                 lemma = fields[4].split('.')[0]
                 self.tagger[wordform] = (lemma, 'n')
             f.close()
+            print >>sys.stderr, "Loaded ", len(self.tagger), " wordforms"
         elif args[0] == "fr.lex":
             print >>sys.stderr, "Reading de.lex"
             self.mode = "tablelookup"
@@ -72,6 +73,7 @@ class Tagger(object):
                     lemma == fields[0]
                 pos = fields[2][0].lower()
                 self.tagger[wordform] = (lemma, pos)
+                print >>sys.stderr, "Loaded ", len(self.tagger), " wordforms"
             f.close()
         else:
             raise Exception("Invalid mode: " + args[0])
@@ -190,12 +192,12 @@ def loadtargetwords(targetwordsfile):
         if line.strip() and line[0] != '#':
             fields = line.strip().split('\t')
             if len(fields) == 4:
-                lemma,pos,lang,senses = fields.split('\t')            
+                lemma,pos,lang,senses = fields.            
                 if not (lemma,pos) in targetwords: 
                     targetwords[(lemma,pos)] = {}
                 targetwords[(lemma,pos)][lang] = senses.split(';')
             elif len(fields) == 2:
-                lemma,pos = fields.split('\t')
+                lemma,pos = fields
                 targetwords[(lemma,pos)] = True
             else:
                 raise Exception("Invalid format in targetwords")
