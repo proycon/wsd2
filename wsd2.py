@@ -330,8 +330,15 @@ class CLWSD2Trainer(object):
         while True:
             print >>sys.stderr, "Reading texts and extracting features"
             f_source = codecs.open(self.sourcefile,'r','utf-8')
-            f_target = codecs.open(self.targetfile,'r','utf-8')            
-            for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                
+            f_target = codecs.open(self.targetfile,'r','utf-8')
+            sentencenum = 0            
+            #for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                
+            while not f_source.eof() and not f_target.eof(): 
+                sentencenum += 1
+                sourceline = f_source.readline()
+                targetline = f_target.readline()
+                if f_source.eof() or f_target.eof(): break
+                
                 sourceline = sourceline.strip()
                 targetline = targetline.strip()
                 sourcewords = sourceline.split()
