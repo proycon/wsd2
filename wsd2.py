@@ -335,6 +335,7 @@ class CLWSD2Trainer(object):
             #for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                
             while not f_source.eof() and not f_target.eof(): 
                 sentencenum += 1
+                print >>sys.stderr, " @" + str(sentencenum)
                 sourceline = f_source.readline()
                 targetline = f_target.readline()
                 if f_source.eof() or f_target.eof(): break
@@ -359,7 +360,7 @@ class CLWSD2Trainer(object):
                             continue
                         
                         
-                        print >>sys.stderr, "@" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
+                        print >>sys.stderr, " @" + str(sentencenum) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
                         
                         #grab local context features
                         localfeatures = [] 
