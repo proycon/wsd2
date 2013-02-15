@@ -12,6 +12,7 @@ from pynlpl.clients.freeling import FreeLingClient
 import corenlp
 import timbl
 import glob
+import json
 
 WSDDIR = os.path.dirname(__file__)
 
@@ -98,7 +99,7 @@ class Tagger(object):
                 lemmas.append(lemma)
             return words, pos, lemmas            
         elif self.mode == "corenlp":            
-            data = self.tagger.parse(" ".join(words))
+            data = json.loads(self.tagger.parse(" ".join(words)))
             words = []
             postags = []
             lemmas = []
