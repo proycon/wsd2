@@ -109,7 +109,7 @@ class Tagger(object):
                     words.append(word)
                     lemmas.append(worddata['Lemma'])
                     postags.append(worddata['PartOfSpeech'][0].lower())
-            return words, pos, lemmas
+            return words, postags, lemmas
         elif self.mode == 'tablelookup':
             postags = []
             lemmas = []
