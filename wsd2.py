@@ -312,6 +312,8 @@ class CLWSD2Trainer(object):
         return bag
 
 
+        
+
     def run(self):        
 
         count = {}
@@ -331,14 +333,8 @@ class CLWSD2Trainer(object):
             print >>sys.stderr, "Reading texts and extracting features"
             f_source = codecs.open(self.sourcefile,'r','utf-8')
             f_target = codecs.open(self.targetfile,'r','utf-8')
-            sentencenum = 0            
-            #for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                
-            while not f_source.eof() and not f_target.eof(): 
-                sentencenum += 1
-                print >>sys.stderr, " @" + str(sentencenum)
-                sourceline = f_source.readline()
-                targetline = f_target.readline()
-                if f_source.eof() or f_target.eof(): break
+            for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                    
+                print >>sys.stderr, " @" + str(sentencenum+1)            
                 
                 sourceline = sourceline.strip()
                 targetline = targetline.strip()
@@ -360,7 +356,7 @@ class CLWSD2Trainer(object):
                             continue
                         
                         
-                        print >>sys.stderr, " @" + str(sentencenum) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
+                        print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
                         
                         #grab local context features
                         localfeatures = [] 
