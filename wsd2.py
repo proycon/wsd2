@@ -242,7 +242,13 @@ class CLWSD2Trainer(object):
 
         
         while True:
-            print >>sys.stderr, "Reading texts and extracting features"
+            if self.sourcetagger: self.sourcetagger.reset()
+            if self.targettagger: self.targettagger.reset()
+            
+            if not finalstage and self.bagofwords:
+                print >>sys.stderr, "Reading texts and counting for global context (first pass)"                
+            elif finalstage:
+                print >>sys.stderr, "Reading texts and extracting features (last pass)"
             f_source = codecs.open(self.sourcefile,'r','utf-8')
             f_target = codecs.open(self.targetfile,'r','utf-8')
             for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                    
