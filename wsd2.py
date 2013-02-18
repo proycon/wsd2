@@ -7,12 +7,9 @@ import os
 import codecs
 from lxml import etree as ElementTree
 from pynlpl.formats.moses import PhraseTable
-from pynlpl.clients.frogclient import FrogClient
-from pynlpl.clients.freeling import FreeLingClient
-import corenlp
+from pynlpl.tagger import Tagger
 import timbl
 import glob
-import json
 
 WSDDIR = os.path.dirname(__file__)
 
@@ -32,94 +29,7 @@ def usage():
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
     print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
-    
-class Tagger(object):    
-     def __init__(self, *args):        
-        global WSDDIR
-        self.tagger = None
-        if args[0] == "frog":
-            self.mode = "frog"
-            port = int(args[1])
-            self.tagger = FrogClient('localhost',port)                
-        elif args[0] == "freeling":
-            self.mode = "freeling"
-            channel = args[1]
-            self.tagger = FreeLingClient(channel)            
-        elif args[0] == "corenlp":
-            self.mode = "corenlp"
-            print >>sys.stderr, "Initialising Stanford Core NLP"
-            self.tagger = corenlp.StanfordCoreNLP()                        
-        elif args[0] == "de.lex":
-            print >>sys.stderr, "Reading de.lex"
-            self.mode = "lookup"
-            self.tagger = {}
-            f = codecs.open(WSDDIR + "/data/lex/de.lex",'r')
-            for line in f:
-                fields = line.split('\t')
-                wordform = fields[0].lower()
-                lemma = fields[4].split('.')[0]
-                self.tagger[wordform] = (lemma, 'n')
-            f.close()
-            print >>sys.stderr, "Loaded ", len(self.tagger), " wordforms"
-        elif args[0] == "fr.lex":
-            print >>sys.stderr, "Reading de.lex"
-            self.mode = "tablelookup"
-            self.tagger = {}
-            f = codecs.open(WSDDIR + "/data/lex/fr.lex",'r')
-            for line in f:
-                fields = line.split('\t')
-                wordform = fields[0].lower()                
-                lemma = fields[1]
-                if lemma == '=': 
-                    lemma == fields[0]
-                pos = fields[2][0].lower()
-                self.tagger[wordform] = (lemma, pos)
-                print >>sys.stderr, "Loaded ", len(self.tagger), " wordforms"
-            f.close()
-        else:
-            raise Exception("Invalid mode: " + args[0])
         
-     def process(self, words):
-        if self.mode == "frog":
-            newwords = []
-            postags = []
-            lemmas = []             
-            for fields in self.tagger.process(' '.join(words)):
-                word,lemma,morph,pos = fields[:4]
-                newwords.append(word)
-                postags.append(pos[0].lower()) #will work for nouns
-                lemmas.append(lemma)
-            return newwords, pos, lemmas                
-        elif self.mode == "freeling":
-            postags = []
-            lemmas = []
-            for fields in self.tagger.process(words):
-                word, lemma,pos = fields[:3]
-                postags.append(pos)
-                lemmas.append(lemma)
-            return words, pos, lemmas            
-        elif self.mode == "corenlp":            
-            data = json.loads(self.tagger.parse(" ".join(words)))
-            words = []
-            postags = []
-            lemmas = []
-            for sentence in data['sentences']:
-                for word, worddata in sentence['words']:
-                    words.append(word)
-                    lemmas.append(worddata['Lemma'])
-                    postags.append(worddata['PartOfSpeech'][0].lower())
-            return words, postags, lemmas
-        elif self.mode == 'tablelookup':
-            postags = []
-            lemmas = []
-            for word in words:
-                try:
-                    lemma, pos = self.tagger[word.lower()]
-                except KeyError: 
-                    lemmas.append(word)
-                    pos.append('?')
-            return words, pos, lemmas
-            
 class TestSet(object):
     languages = {
         'english': 'en',
@@ -221,7 +131,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, bagofwords,bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold):      
+    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -252,9 +162,11 @@ class CLWSD2Trainer(object):
         self.classifiers = {}
         
         self.bagofwords = bagofwords
+        self.compute_bow_params = compute_bow_params
         self.bow_absolute_threshold = bow_absolute_threshold
         self.bow_prob_threshold = bow_prob_threshold
         self.bow_filter_threshold = bow_filter_threshold
+        self.timbloptions = timbloptions
 
     def probability_sense_given_keyword(self, focuslemma,focuspos,senselabel, lemma,pos, count, totalcount):
         if not focuslemma+'.'+focuspos in count:
@@ -299,7 +211,7 @@ class CLWSD2Trainer(object):
             for lemma, pos in [ x.rsplit('.',1) for x in count[(focuslemma,focuspos)][sense].keys() ]:
                  if (totalcount[(lemma,pos)] >= self.bow_filter_threshold): #filter very rare words (occuring less than 20 times)
                      if count[(focuslemma,focuspos)][sense][(lemma,pos)] >= bow_absolute_threshold:
-                        p = self.probability_sense_given_keyword(focuslemma,focuspos,sense,lemma,pos) 
+                        p = self.probability_sense_given_keyword(focuslemma,focuspos,sense,lemma,pos, count, totalcount) 
                         if p >= self.bow_prob_threshold:
                             bag.append( (lemma,pos, sense, count[(focuslemma,focuspos)][sense][(lemma,pos)], p) )
 
@@ -344,6 +256,7 @@ class CLWSD2Trainer(object):
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
                 targetpostags = None
                 targetlemmas = None            
+                sourcepostags = [ x[0].lower() for x in sourcepostags ]
                 
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
 
@@ -394,7 +307,8 @@ class CLWSD2Trainer(object):
                                 #tag and lemmatise target sentence if not done yet
                                 if targetpostags is None or targetlemmas is None:
                                     _, targetpostags, targetlemmas = self.targettagger.process(targetwords)
-                                
+                                    targetpostags = [ x[0].lower() for x in targetpostags ]
+                                    
                                 #get lemmatised form of target word
                                 if ' ' in target:
                                     target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
@@ -450,20 +364,20 @@ class CLWSD2Trainer(object):
             elif self.bagofwords:
                 for lemma,pos in count.keys():        
                     if self.compute_bow_params:
-                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, self.bow_absolute_threshold,  count, totalcount)            
+                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos, self.bow_absolute_threshold,count, totalcount)            
                         absthreshold = self.bow_absolute_threshold
                         if len(bags[(lemma,pos)]) <= 5:
                             #too few results, loosen parameters
                             while len(bags[(lemma,pos)]) <= 5 and absthreshold > 1:
                                 absthreshold = absthreshold - 1
-                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, absthreshold, count, totalcount)    
+                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,absthreshold, count, totalcount)    
                         elif len(bags[(lemma,pos)]) >= 500:
                             #too many results, tighten parameters
                             while len(bags[(lemma,pos)]) >= 500:
                                 absthreshold = absthreshold + 1
-                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,self.outputdir, absthreshold, count, totalcount)                            
+                                bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos, absthreshold, count, totalcount)                            
                     else:
-                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos,outputdir, self.bow_absolute_threshold,  count, totalcount)                
+                        bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos, self.bow_absolute_threshold,  count, totalcount)                
                 finalstage = True
             
         
@@ -539,7 +453,7 @@ class CLWSD2Tester(object):
             out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
             out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
-            for instancenum, (id, leftcontext,head,rightcontext) in enumerate(self.testdata.instances(lemma,pos)):
+            for instancenum, (id, leftcontext,head,rightcontext) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
                 
                 sourcewords_untok = leftcontext + [head] + rightcontext
@@ -616,6 +530,7 @@ if __name__ == "__main__":
     contextsize = 0
     
     bagofwords = False
+    compute_bow_params = False
     bow_absolute_threshold = 3 #Bag-of-word needs to occur at least x times in context
     bow_prob_threshold = 0.001 #Bag-of-word needs to have sense|keyword probability of at least x
     bow_filter_threshold = 20 #Filter out words with a global corpus occurence less than x
@@ -666,7 +581,9 @@ if __name__ == "__main__":
             if len(fields) >= 2:
                bow_prob_threshold = float(fields[1])
             if len(fields) >= 3:
-               bow_filter_threshold = int(fields[2])             
+               bow_filter_threshold = int(fields[2])
+        elif o == '-R':             
+            compute_bow_params = True
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
@@ -685,7 +602,7 @@ if __name__ == "__main__":
         elif not targettagger:            
             print >>sys.stderr, "ERROR: No target tagger specified"
             sys.exit(2)
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, bagofwords,bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         trainer.run()
         
     if TEST:
