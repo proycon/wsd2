@@ -447,7 +447,7 @@ def paramsearch2timblargs(filename):
 
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords):        
         self.sourcetagger = sourcetagger
         
         
@@ -472,6 +472,7 @@ class CLWSD2Tester(object):
                 
         self.testset = TestSet(testfiles)
         self.timbloptions = timbloptions
+        self.bagofwords = bagofwords
               
        
     def run(self):
