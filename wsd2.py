@@ -103,16 +103,20 @@ def loadtargetwords(targetwordsfile):
         if line.strip() and line[0] != '#':
             fields = line.strip().split('\t')
             if len(fields) == 4:
-                lemma,pos,lang,senses = fields            
+                lemma,pos,lang,senses = fields   
+                lemma = lemma.strip()
+                pos = pos.strip()         
                 if not (lemma,pos) in targetwords: 
                     targetwords[(lemma,pos)] = {}
                 targetwords[(lemma,pos)][lang] = senses.split(';')
             elif len(fields) == 2:
                 lemma,pos = fields
+                lemma = lemma.strip()
+                pos = pos.strip()                    
                 targetwords[(lemma,pos)] = True
             else:
                 raise Exception("Invalid format in targetwords")
-                
+    f.close()
                 
     return targetwords
 
