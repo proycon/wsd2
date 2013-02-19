@@ -40,6 +40,8 @@ class TestSet(object):
     }
 
     def __init__(self, filenames = []):
+        self.lexunits = {}
+        self.orderedlemmas = [] #we have to retain the order somehow, dictionary is unordered
         if (isinstance( filenames,str) or isinstance(filenames,unicode)):
             self.load(filenames) 
         else:
@@ -55,9 +57,7 @@ class TestSet(object):
             root = root[0]
         else:
             raise Exception("This is not a valid test-file!")
-        self.lang = TestSet.languages[root.attrib['lang']]
-        self.lexunits = {}
-        self.orderedlemmas = [] #we have to retain the order somehow, dictionary is unordered
+        self.lang = TestSet.languages[root.attrib['lang']]        
 
         for lemmanode in root.findall('.//lexelt'):
             lemma, pos = lemmanode.attrib['item'].rsplit(".",1)
@@ -465,8 +465,8 @@ class CLWSD2Tester(object):
 
         testfiles = []
         for lemma, pos in self.targetwords:
-            if os.path.exists(testdir+"/" + lemma + '.data'):
-                testfiles.append(testdir+"/" + lemma + '.data')
+            if os.path.exists(self.outputdir+"/" + lemma + '.data'):
+                testfiles.append(self.outputdir+"/" + lemma + '.data')
             else:
                 print >>sys.stderr, "WARNING: No testfile found for ", lemma
                 
