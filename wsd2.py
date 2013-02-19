@@ -78,7 +78,7 @@ class TestSet(object):
                 if not rightcontext: rightcontext = ""
                 if rightcontext and not isinstance(rightcontext, unicode):
                     rightcontext = unicode(rightcontext, 'utf-8')
-                instances[id] = (id, leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
+                instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
 
             self.lexunits[lemma+'.'+pos] = instances
             self.orderedlemmas.append( (lemma,pos) ) #(so we can keep right ordering)
@@ -494,7 +494,7 @@ class CLWSD2Tester(object):
             out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
             out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
-            for instancenum, (id, leftcontext,head,rightcontext) in enumerate(self.testset.instances(lemma,pos)):
+            for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
                 
                 sourcewords_untok = leftcontext + [head] + rightcontext
