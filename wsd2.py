@@ -309,7 +309,7 @@ class CLWSD2Trainer(object):
                                         break
                             
                             if foundindex != -1:
-                                foundtranslationoptions = (target, Pts, foundindex)
+                                foundtranslationoptions.append( (target, Pts, foundindex) )
                                 if Pts > bestscore: bestscore = Pts
                         
                         #prune translation options scoring too low
