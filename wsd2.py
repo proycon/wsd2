@@ -100,7 +100,8 @@ def loadtargetwords(targetwordsfile):
     targetwords = {}
     f = codecs.open(targetwordsfile, 'r','utf-8')
     for line in f:
-        if line.strip() and line[0] != '#':
+        line = line.lstrip( unicode( codecs.BOM_UTF8, "utf-8" ) )
+        if line.strip() and line[0] != '#':            
             fields = line.strip().split('\t')
             if len(fields) == 4:
                 lemma,pos,lang,senses = fields   
