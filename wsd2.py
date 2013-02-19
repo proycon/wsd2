@@ -573,7 +573,7 @@ if __name__ == "__main__":
     for o, a in opts:
         if o == "--train":	
             TRAIN = True
-        elif o == "--train":	
+        elif o == "--test":	
             TEST = True            
         elif o == "-s":
             sourcefile = a
