@@ -261,9 +261,9 @@ class CLWSD2Trainer(object):
                 targetwords = targetline.split()
                 
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
-		targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
+                targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
                 sourcepostags = [ x[0].lower() for x in sourcepostags ]
-		targetpostags = [ x[0].lower() for x in targetpostags ]               
+                targetpostags = [ x[0].lower() for x in targetpostags ]               
  
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
                     if (sourcelemma, sourcepos) in self.targetwords and sourceword in self.phrasetable:
@@ -341,7 +341,7 @@ class CLWSD2Trainer(object):
                                     target = targetlemmas[foundindex] 
                                 
                                 print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
-                                if finalstage:                                
+                                if finalstage:
                                     if not (sourcelemma,sourcepos, self.targetlang) in self.classifiers:
                                         #init classifier
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
@@ -361,7 +361,7 @@ class CLWSD2Trainer(object):
 
                                         #and output the bag of words features
                                         for contextlemma, contextpos in sorted(bag.keys()):
-                                            globalfeatures.append(bag[(contextlemma,contextpos)])                                         
+                                            globalfeatures.append(bag[(contextlemma,contextpos)])
                                         
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures + globalfeatures, target)
                                         
@@ -369,16 +369,16 @@ class CLWSD2Trainer(object):
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
                                         
                                 elif self.bagofwords:
-				    if (sourcelemma,sourcepos) in count:
-	                                    if not target in count[(sourcelemma, sourcepos)]:
-        	                                count[(sourcelemma,sourcepos)][target] = {}
+                                    if (sourcelemma,sourcepos) in count:
+                                        if not target in count[(sourcelemma, sourcepos)]:
+                                            count[(sourcelemma,sourcepos)][target] = {}
                                         
-                	                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
-                        	                if j != i:
-                                	            if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
-                                        	        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
-	                                            else:
-        	                                        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1                                    
+                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
+                                            if j != i:
+                                                if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
+                                                    count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
+                                                else:
+                                                    count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1
                          
                         print >>sys.stderr                           
 
@@ -629,8 +629,7 @@ if __name__ == "__main__":
             print >>sys.stderr, "ERROR: No phrasetable file specified"
             sys.exit(2)
         elif not targettagger:            
-            print >>sys.stderr, "ERROR: No target tagger specified"
-            sys.exit(2)
+            print >>sys.stderr, "WARNING: No target tagger specified"
         trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         trainer.run()
         
