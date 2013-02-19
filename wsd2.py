@@ -514,7 +514,7 @@ class CLWSD2Tester(object):
                             mindistance = distance 
                            
                 if focusindex == -1: 
-                    raise Exception("Focus word not found after tokenisation! This should not happen!")
+                    raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8'))
                          
                 #grab local context features
                 features = []                    
