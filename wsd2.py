@@ -497,10 +497,9 @@ class CLWSD2Tester(object):
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
                 
-                sourcewords_untok = leftcontext + ' ' + head + ' ' + rightcontext
+                sourcewords_untok = leftcontext + head + rightcontext
                 
-                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_untok)
-                
+                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_untok.split(' '))              
                 #find new head position (may have moved due to tokenisation)
                 origindex = len(leftcontext.split(' '))
                 mindistance = 9999
@@ -514,20 +513,27 @@ class CLWSD2Tester(object):
                             mindistance = distance 
                            
                 if focusindex == -1: 
-                    raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8') + ",words=" + " ".join(sourcewords).encode('utf-8'))
+                    raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8') + ",words=" + sourcewords_untok.encode('utf-8'))
                          
                 #grab local context features
                 features = []                    
-                for j in range(focusindex - self.contextsize, focusindex + len(sourcewords) + self.contextsize):
-                    if j > 0 and j < focusindex + len(sourcewords):
+                for j in range(focusindex - self.contextsize, focusindex + 1 + self.contextsize):
+                    if j > 0 and j < len(sourcewords):
                         features.append(sourcewords[j])
-                        if self.DOPOS: features.append(sourcepostags[j])
-                        if self.DOLEMMAS: features.append(sourcelemmas[j])
+                        if self.DOPOS and sourcepostags[j]:
+				 features.append(sourcepostags[j])
+			else:
+	 			features.append("?")
+                        if self.DOLEMMAS and sourcelemmas[j]: 
+				features.append(sourcelemmas[j])	
+			else:
+				features.append("?")
                     else:
                         features.append("{NULL}")
                         if self.DOPOS: features.append("{NULL}")
                         if self.DOLEMMAS: features.append("{NULL}")     
-                                            
+
+		print repr(features)                                            
                 _, distribution, distance = classifier.classify(features)
                 
                 bestscore = max(distribution.values())
