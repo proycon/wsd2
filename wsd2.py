@@ -468,7 +468,7 @@ class CLWSD2Tester(object):
             if os.path.exists(testdir+"/" + lemma + '.data'):
                 testfiles.append(testdir+"/" + lemma + '.data')
             else:
-                print >>sys.stderr, "WARNING: No testfile found for ", lemma
+                print >>sys.stderr, "WARNING: No testfile found for " + lemma + " (tried " + testdir+"/" + lemma + '.data)'
                 
         self.testset = TestSet(testfiles)
         self.timbloptions = timbloptions
