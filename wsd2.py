@@ -131,7 +131,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold):      
+    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -167,6 +167,7 @@ class CLWSD2Trainer(object):
         self.bow_prob_threshold = bow_prob_threshold
         self.bow_filter_threshold = bow_filter_threshold
         self.timbloptions = timbloptions
+        self.maxdivergencefrombest = maxdivergencefrombest
 
     def probability_sense_given_keyword(self, focuslemma,focuspos,senselabel, lemma,pos, count, totalcount):
         if not focuslemma+'.'+focuspos in count:
@@ -274,7 +275,7 @@ class CLWSD2Trainer(object):
                             continue
                         
                         
-                        print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos + ' (' + str(len(translationoptions)) + ')',
+                        print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
                         
                         #grab local context features
                         localfeatures = [] 
@@ -288,11 +289,35 @@ class CLWSD2Trainer(object):
                                 if self.DOPOS: localfeatures.append("{NULL}")
                                 if self.DOLEMMAS: localfeatures.append("{NULL}")                            
                         
+
+                        
+                        foundtranslationoptions = []
+                        bestscore = 0
+                        for target, Pst, Pts,_ in translationoptions:
+                            #check if and where it occurs in target sense
+                            foundindex = -1
+                            if ' ' in target:
+                                targetl = target.split(' ')
+                                for j in range(0,len(targetwords) - len(targetl)):
+                                    if targetwords[j:j+len(targetl)] == targetl: 
+                                        foundindex = j
+                                        break                            
+                            else:
+                                for j, w in enumerate(targetwords):
+                                    if target == w:
+                                        foundindex = j
+                                        break
+                            
+                            if foundindex != -1:
+                                foundtranslationoptions = (target, Pts, foundindex)
+                                if Pts > bestscore: bestscore = Pts
+                        
+                        #prune translation options scoring too low
+                        foundtranslationoptions = [ x for x in foundtranslationoptions if x[2] >= bestscore * self.maxdivergencefrombest ]
                         
                         
                         #which of the translation options actually occurs in the target sentence?
-                        for target, Pst, Pts,_ in translationoptions:
-			    #print >>sys.stderr,target
+                        for target, Pts,foundindex in foundtranslationoptions:
 
                             #check if and where it occurs in target sense
                             foundindex = -1
@@ -317,7 +342,7 @@ class CLWSD2Trainer(object):
                                 
                                 print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
                                 if finalstage:                                
-                                    if not (sourcelemma,sourcepos) in self.classifiers:
+                                    if not (sourcelemma,sourcepos, self.targetlang) in self.classifiers:
                                         #init classifier
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
                                 
