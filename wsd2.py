@@ -544,7 +544,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:m:", ["train","test", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:m:T:", ["train","test", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -559,7 +559,7 @@ if __name__ == "__main__":
     sourcetagger = None
     targettagger = None
     outputdir = "."
-    testdir = "data/trial"
+    testdir = WSDDIR + "/data/trial"
     targetlang = ""
     exemplarweights = False
     timbloptions = "-a 0 -k 1"
