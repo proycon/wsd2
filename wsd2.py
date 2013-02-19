@@ -136,7 +136,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
+    def __init__(self, outputdir, targetlang, phrasetable, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
         if not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -156,8 +156,7 @@ class CLWSD2Trainer(object):
         print >>sys.stderr, len(self.targetwords),"loaded"
      
         self.targetlang = targetlang                        
-        print >>sys.stderr, "Loading Moses Phrasetable " + phrasetablefile
-        self.phrasetable = PhraseTable(phrasetablefile)
+        self.phrasetable = phrasetable
         
         self.contextsize = contextsize
         self.DOPOS = DOPOS
@@ -652,7 +651,12 @@ if __name__ == "__main__":
             sys.exit(2)
         elif not targettagger:            
             print >>sys.stderr, "WARNING: No target tagger specified"
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
+        if TRAINGEN:
+            print >>sys.stderr, "Loading phrasetable..."
+            phrasetable = PhraseTable(phrasetablefile)
+        else:
+            phrasetable = []            
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         if not TRAINGEN:
             trainer.loadclassifiers()
             trainer.run2()
