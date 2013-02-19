@@ -148,7 +148,7 @@ class CLWSD2Trainer(object):
         
         print >>sys.stderr, "Loading Target Words " + targetwordsfile
         self.targetwords = loadtargetwords(targetwordsfile)
-        
+        print >>sys.stderr, len(self.targetwords),"loaded"
      
         self.targetlang = targetlang                        
         print >>sys.stderr, "Loading Moses Phrasetable " + phrasetablefile
@@ -260,13 +260,12 @@ class CLWSD2Trainer(object):
                 targetwords = targetline.split()
                 
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
-                targetpostags = None
-                targetlemmas = None            
+		targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
                 sourcepostags = [ x[0].lower() for x in sourcepostags ]
-                
+		targetpostags = [ x[0].lower() for x in targetpostags ]               
+ 
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
-
-                    if (sourcelemma, sourcepos) in targetwords and sourceword in self.phrasetable:
+                    if (sourcelemma, sourcepos) in self.targetwords and sourceword in self.phrasetable:
                                             
                         #find options in phrasetable
                         try:
@@ -280,8 +279,8 @@ class CLWSD2Trainer(object):
                         #grab local context features
                         localfeatures = [] 
                         for j in range(i - self.contextsize, i + len(sourcewords) + self.contextsize):
-                            if j > 0 and j < i + len(sourcewords):
-                                localfeatures.append(sourceword[j])
+                            if j > 0 and j < len(sourcewords):
+                                localfeatures.append(sourcewords[j])
                                 if self.DOPOS: localfeatures.append(sourcepostags[j])
                                 if self.DOLEMMAS: localfeatures.append(sourcelemmas[j])
                             else:
@@ -293,7 +292,7 @@ class CLWSD2Trainer(object):
                         
                         #which of the translation options actually occurs in the target sentence?
                         for target, Pst, Pts,_ in translationoptions:
-
+			    print >>sys.stderr
 
                             #check if and where it occurs in target sense
                             foundindex = -1
@@ -310,10 +309,6 @@ class CLWSD2Trainer(object):
                                         break
                                                     
                             if foundindex != -1: 
-                                #tag and lemmatise target sentence if not done yet
-                                if targetpostags is None or targetlemmas is None:
-                                    _, targetpostags, targetlemmas = self.targettagger.process(targetwords)
-                                    targetpostags = [ x[0].lower() for x in targetpostags ]
                                     
                                 #get lemmatised form of target word
                                 if ' ' in target:
@@ -390,7 +385,7 @@ class CLWSD2Trainer(object):
                 
             
     def run2(self):        
-        print >>sys.stderr, "Training classifiers"
+        print >>sys.stderr, "Training " + str(len(self.classifiers)) + " classifiers"
         for classifier in self.classifiers:
             self.classifiers[classifier].train()
 
