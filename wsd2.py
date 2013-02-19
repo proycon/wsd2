@@ -423,7 +423,8 @@ class CLWSD2Trainer(object):
         print >>sys.stderr, "Training " + str(len(self.classifiers)) + " classifiers"
         for classifier in self.classifiers:
             self.classifiers[classifier].train()
-
+            self.classifiers[classifier].writeInstanceBase(self.classifiers[classifier].fileprefix + ".ibase")
+            
         print >>sys.stderr, "Parameter optimisation"
         for f in glob.glob(self.outputdir + '/*.train'):
             os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch")
@@ -521,19 +522,19 @@ class CLWSD2Tester(object):
                     if j > 0 and j < len(sourcewords):
                         features.append(sourcewords[j])
                         if self.DOPOS and sourcepostags[j]:
-				 features.append(sourcepostags[j])
-			else:
-	 			features.append("?")
+                            features.append(sourcepostags[j])
+                        else:
+                            features.append("?")
                         if self.DOLEMMAS and sourcelemmas[j]: 
-				features.append(sourcelemmas[j])	
-			else:
-				features.append("?")
+                            features.append(sourcelemmas[j])	
+                        else:
+                            features.append("?")
                     else:
                         features.append("{NULL}")
                         if self.DOPOS: features.append("{NULL}")
                         if self.DOLEMMAS: features.append("{NULL}")     
 
-		print repr(features)                                            
+                print repr(features)                                            
                 _, distribution, distance = classifier.classify(features)
                 
                 bestscore = max(distribution.values())
@@ -555,7 +556,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:m:T:", ["train","test", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "s:t:c:lpbB:Ro:w:L:O:m:T:", ["train","test", "nogen", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -563,6 +564,7 @@ if __name__ == "__main__":
 	    sys.exit(2)           
     
     TRAIN = TEST = False
+    TRAINGEN = True
     sourcefile = targetfile = phrasetablefile = ""
     targetwordsfile = WSDDIR + "/data/targetwords.trial"
     DOLEMMAS = False
@@ -587,6 +589,8 @@ if __name__ == "__main__":
             TRAIN = True
         elif o == "--test":	
             TEST = True            
+        elif o == "--nogen":	
+            TRAINGEN = False                        
         elif o == "-s":
             sourcefile = a
             if not os.path.exists(sourcefile):
@@ -649,7 +653,11 @@ if __name__ == "__main__":
         elif not targettagger:            
             print >>sys.stderr, "WARNING: No target tagger specified"
         trainer = CLWSD2Trainer(outputdir, targetlang, phrasetablefile, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
-        trainer.run()
+        if not TRAINGEN:
+            trainer.loadclassifiers()
+            trainer.run2()
+        else:
+            trainer.run()
         
     if TEST:
         tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords)
