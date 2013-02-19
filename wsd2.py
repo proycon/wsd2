@@ -313,7 +313,7 @@ class CLWSD2Trainer(object):
                                 if Pts > bestscore: bestscore = Pts
                         
                         #prune translation options scoring too low
-                        foundtranslationoptions = [ x for x in foundtranslationoptions if x[2] >= bestscore * self.maxdivergencefrombest ]
+                        foundtranslationoptions = [ x for x in foundtranslationoptions if x[1] >= bestscore * self.maxdivergencefrombest ]
                         
                         
                         #which of the translation options actually occurs in the target sentence?
