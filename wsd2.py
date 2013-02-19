@@ -274,11 +274,11 @@ class CLWSD2Trainer(object):
                             continue
                         
                         
-                        print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
+                        print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos + ' (' + str(len(translationoptions)) + ')',
                         
                         #grab local context features
                         localfeatures = [] 
-                        for j in range(i - self.contextsize, i + len(sourcewords) + self.contextsize):
+                        for j in range(i - self.contextsize, i + 1 + self.contextsize):
                             if j > 0 and j < len(sourcewords):
                                 localfeatures.append(sourcewords[j])
                                 if self.DOPOS: localfeatures.append(sourcepostags[j])
@@ -292,7 +292,7 @@ class CLWSD2Trainer(object):
                         
                         #which of the translation options actually occurs in the target sentence?
                         for target, Pst, Pts,_ in translationoptions:
-			    print >>sys.stderr
+			    #print >>sys.stderr,target
 
                             #check if and where it occurs in target sense
                             foundindex = -1
@@ -303,28 +303,26 @@ class CLWSD2Trainer(object):
                                         foundindex = j
                                         break                            
                             else:
-                                for w in enumerate(targetwords):
+                                for j, w in enumerate(targetwords):
                                     if target == w:
                                         foundindex = j
                                         break
                                                     
                             if foundindex != -1: 
-                                    
                                 #get lemmatised form of target word
                                 if ' ' in target:
                                     target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
                                 else:
                                     target = targetlemmas[foundindex] 
                                 
-                                print >>sys.stderr, "\t" + target.encode('utf-8')
+                                print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
                                 if finalstage:                                
                                     if not (sourcelemma,sourcepos) in self.classifiers:
                                         #init classifier
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
                                 
                                     
-                                    
-                                    if self.bagofwords:                                        
+                                    if self.bagofwords and (sourcelemma,sourcepos) in bags:                                        
                                         globalfeatures = []
                                         #create new bag
                                         bag = {}
@@ -346,15 +344,16 @@ class CLWSD2Trainer(object):
                                         self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
                                         
                                 elif self.bagofwords:
-                                    if not target in count[(sourcelemma, sourcepos)]:
-                                        count[(sourcelemma,sourcepos)][target] = {}
+				    if (sourcelemma,sourcepos) in count:
+	                                    if not target in count[(sourcelemma, sourcepos)]:
+        	                                count[(sourcelemma,sourcepos)][target] = {}
                                         
-                                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
-                                        if j != i:
-                                            if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
-                                                count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
-                                            else:
-                                                count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1                                    
+                	                    for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
+                        	                if j != i:
+                                	            if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
+                                        	        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
+	                                            else:
+        	                                        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1                                    
                          
                         print >>sys.stderr                           
 
