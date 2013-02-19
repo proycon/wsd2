@@ -465,8 +465,8 @@ class CLWSD2Tester(object):
 
         testfiles = []
         for lemma, pos in self.targetwords:
-            if os.path.exists(self.outputdir+"/" + lemma + '.data'):
-                testfiles.append(self.outputdir+"/" + lemma + '.data')
+            if os.path.exists(testdir+"/" + lemma + '.data'):
+                testfiles.append(testdir+"/" + lemma + '.data')
             else:
                 print >>sys.stderr, "WARNING: No testfile found for ", lemma
                 
