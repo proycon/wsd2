@@ -385,12 +385,16 @@ class CLWSD2Trainer(object):
                     else:
                         bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos, self.bow_absolute_threshold,  count, totalcount)                
                 finalstage = True
-            
         
+        self.run2() 
+                
+            
+    def run2(self):        
         print >>sys.stderr, "Training classifiers"
         for classifier in self.classifiers:
             self.classifiers[classifier].train()
 
+        print >>sys.stderr, "Parameter optimisation"
         for f in glob.glob(self.outputdir + '/*.train'):
             os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch")
         
