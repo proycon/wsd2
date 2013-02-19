@@ -261,9 +261,14 @@ class CLWSD2Trainer(object):
                 targetwords = targetline.split()
                 
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
-                targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
                 sourcepostags = [ x[0].lower() for x in sourcepostags ]
-                targetpostags = [ x[0].lower() for x in targetpostags ]               
+                               
+                if self.targettagger: 
+                    targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
+                    targetpostags = [ x[0].lower() for x in targetpostags ]                               
+                else:
+                    targetpostags = []
+                    targetlemmas = []
  
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
                     if (sourcelemma, sourcepos) in self.targetwords and sourceword in self.phrasetable:
@@ -335,10 +340,11 @@ class CLWSD2Trainer(object):
                                                     
                             if foundindex != -1: 
                                 #get lemmatised form of target word
-                                if ' ' in target:
-                                    target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
-                                else:
-                                    target = targetlemmas[foundindex] 
+                                if self.targettagger:
+                                    if ' ' in target:
+                                        target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
+                                    else:
+                                        target = targetlemmas[foundindex] 
                                 
                                 print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
                                 if finalstage:
