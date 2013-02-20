@@ -549,7 +549,7 @@ class CLWSD2Tester(object):
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + ';'.join(bestsenses) + ';\n')
                 out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
                 
-                print >>sys.stderr, "\t" + distribution
+                print >>sys.stderr, "\t" + repr(distribution)
                 
             out_best.close()
             out_oof.close()
