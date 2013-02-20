@@ -104,7 +104,7 @@ class TestSet(object):
                 raise Exception("ucto failed")
             
             print >>sys.stderr, "Processing ucto output from "+ tmpfilename + '.out'
-            f = open(tmpfilename + '.out','r')
+            f = codecs.open(tmpfilename + '.out','r','utf-8')
             for i, line in enumerate(f):
                 if i == len(tmpmap): break
                 leftcontext_untok, head, rightcontext_untok = tmpmap[i]
