@@ -645,7 +645,7 @@ class CLWSD2Tester(object):
             self.scorereport()
                  
     def scorereport(self):
-        f = codecs.open(self.outputdir + '/results')
+        f = codecs.open(self.outputdir + '/results','w','utf-8')
         f.write('BEST RESULTS\n-------------\n')
         
         rlist = []
