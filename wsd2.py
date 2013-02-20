@@ -382,9 +382,11 @@ class CLWSD2Trainer(object):
                                 if self.DOLEMMAS: localfeatures.append("{NULL}")                            
                         
 
-                        
-                        foundtranslationoptions = []
+                                                
+                        #Find which translation option is the best match here, only one may be used
+                        bestpossiblescore = [ max(x[2] for x in translationoptions) ]
                         bestscore = 0
+                        best = None                        
                         for target, Pst, Pts,_ in translationoptions:
                             #check if and where it occurs in target sense
                             foundindex = -1
@@ -401,77 +403,65 @@ class CLWSD2Trainer(object):
                                         break
                             
                             if foundindex != -1:
-                                foundtranslationoptions.append( (target, Pts, foundindex) )
+                                best = (target, Pts, foundindex)
                                 if Pts > bestscore: bestscore = Pts
+                                                
                         
-                        #prune translation options scoring too low
-                        foundtranslationoptions = [ x for x in foundtranslationoptions if x[1] >= bestscore * self.maxdivergencefrombest ]
-                        
-                        
-                        #which of the translation options actually occurs in the target sentence?
-                        for target, Pts,foundindex in foundtranslationoptions:
-
-                            #check if and where it occurs in target sense
-                            foundindex = -1
+                        if not best:
+                            print >>sys.stderr,"No translation options match"
+                            continue
+                        elif bestscore < bestpossiblescore * self.maxdivergencefrombest:
+                            print >>sys.stderr,"Matching translation option '" + target + "' scores too low (" + str(bestscore) + " vs " + str(bestpossiblescore) + ")"
+                            continue 
+                        else:
+                            target, Pts, foundindex = best
+                                            
+                        #get lemmatised form of target word
+                        if self.targettagger:
                             if ' ' in target:
-                                targetl = target.split(' ')
-                                for j in range(0,len(targetwords) - len(targetl)):
-                                    if targetwords[j:j+len(targetl)] == targetl: 
-                                        foundindex = j
-                                        break                            
+                                target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
                             else:
-                                for j, w in enumerate(targetwords):
-                                    if target == w:
-                                        foundindex = j
-                                        break
-                                                    
-                            if foundindex != -1: 
-                                #get lemmatised form of target word
-                                if self.targettagger:
-                                    if ' ' in target:
-                                        target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
-                                    else:
-                                        target = targetlemmas[foundindex] 
+                                target = targetlemmas[foundindex] 
+                        
+                        print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
+                        if finalstage:
+                            if not (sourcelemma,sourcepos, self.targetlang) in self.classifiers:
+                                #init classifier
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
+                        
+                            
+                            if self.bagofwords and (sourcelemma,sourcepos) in bags:                                        
+                                globalfeatures = []
+                                #create new bag
+                                bag = {}
+                                for keylemma,keypos,_,_,_ in bags[(sourcelemma, sourcepos)]:
+                                    bag[keylemma,keypos] = 0
                                 
-                                print >>sys.stderr, "\t\"" + target.encode('utf-8') + "\"",
-                                if finalstage:
-                                    if not (sourcelemma,sourcepos, self.targetlang) in self.classifiers:
-                                        #init classifier
-                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + sourcelemma +'.' + sourcepos + '.' + targetlang, self.timbloptions)
-                                
-                                    
-                                    if self.bagofwords and (sourcelemma,sourcepos) in bags:                                        
-                                        globalfeatures = []
-                                        #create new bag
-                                        bag = {}
-                                        for keylemma,keypos,_,_,_ in bags[(sourcelemma, sourcepos)]:
-                                            bag[keylemma,keypos] = 0
-                                        
-                                        #now count the words in our context
-                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
-                                            if (contextlemma, contextpos) in bag:
-                                                bag[(contextlemma,contextpos)] = 1
+                                #now count the words in our context
+                                for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
+                                    if (contextlemma, contextpos) in bag:
+                                        bag[(contextlemma,contextpos)] = 1
 
-                                        #and output the bag of words features
-                                        for contextlemma, contextpos in sorted(bag.keys()):
-                                            globalfeatures.append(bag[(contextlemma,contextpos)])
-                                        
-                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures + globalfeatures, target)
-                                        
-                                    else:
-                                        self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
-                                        
-                                elif self.bagofwords:
-                                    if (sourcelemma,sourcepos) in count:
-                                        if not target in count[(sourcelemma, sourcepos)]:
-                                            count[(sourcelemma,sourcepos)][target] = {}
-                                        
-                                        for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
-                                            if j != i:
-                                                if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
-                                                    count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
-                                                else:
-                                                    count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1
+                                #and output the bag of words features
+                                for contextlemma, contextpos in sorted(bag.keys()):
+                                    globalfeatures.append(bag[(contextlemma,contextpos)])
+                                
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures + globalfeatures, target)
+                                
+                            else:
+                                self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
+                                
+                        elif self.bagofwords:
+                            if (sourcelemma,sourcepos) in count:
+                                if not target in count[(sourcelemma, sourcepos)]:
+                                    count[(sourcelemma,sourcepos)][target] = {}
+                                
+                                for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
+                                    if j != i:
+                                        if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
+                                            count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
+                                        else:
+                                            count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1
                          
                         print >>sys.stderr                           
 
