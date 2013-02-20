@@ -32,7 +32,7 @@ def usage():
     print >> sys.stderr,"          3) Filter out words with a global corpus occurence less than x"
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
-    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
+    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "    
         
 class TestSet(object):
     languages = {
@@ -568,11 +568,16 @@ class CLWSD2Tester(object):
 
             timbloptions = self.timbloptions 
             if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch'):
-                timbloptions += " " + paramsearch2timblargs(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch')            
+                o = paramsearch2timblargs(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch')
+                timbloptions += " " + o 
+                print >>sys.stderr, "Parameter optimisation loaded: " + o
+            else:            
+                print >>sys.stderr, "NOTICE: No parameter optimisation found!"
             
+            print >>sys.stderr, "Instantiating classifier " + lemma.encode('utf-8') + " with options: " + timbloptions
             classifier = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)
-            out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
-            out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
+            out_best = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
+            out_oof = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, "--> " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
