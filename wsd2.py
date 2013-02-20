@@ -384,7 +384,7 @@ class CLWSD2Trainer(object):
 
                                                 
                         #Find which translation option is the best match here, only one may be used
-                        bestpossiblescore = [ max(x[2] for x in translationoptions) ]
+                        bestpossiblescore = max([ x[2] for x in translationoptions])
                         bestscore = 0
                         best = None                        
                         for target, Pst, Pts,_ in translationoptions:
