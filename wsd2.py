@@ -95,7 +95,7 @@ class TestSet(object):
                     rightcontext = unicode(rightcontext, 'utf-8')
                 idmap.append(id)
                 tmpmap.append( (leftcontext, head, rightcontext) )
-                tmpfile.write(leftcontext + head + rightcontext)
+                tmpfile.write(leftcontext + head + rightcontext + "\n")
                 #instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
             
             tmpfile.close()
@@ -154,6 +154,11 @@ class TestSet(object):
                 
             f.close()
             
+            try:
+                os.unlink(tmpfilename)
+                os.unlink(tmpfilename + '.out')
+            except:
+                pass
 
             self.lexunits[lemma+'.'+pos] = instances
             self.orderedlemmas.append( (lemma,pos) ) #(so we can keep right ordering)
