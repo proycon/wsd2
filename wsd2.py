@@ -402,10 +402,10 @@ class CLWSD2Trainer(object):
                                         foundindex = j
                                         break
                             
-                            if foundindex != -1:
-                                best = (target, Pts, foundindex)
-                                if Pts > bestscore: bestscore = Pts
-                                                
+                            if foundindex != -1:                                
+                                if Pts > bestscore: 
+                                    bestscore = Pts
+                                    best = (target, Pts, foundindex)                                                
                         
                         if not best:
                             print >>sys.stderr,"No translation options match"
