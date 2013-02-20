@@ -779,7 +779,7 @@ if __name__ == "__main__":
             print >>sys.stderr, "WARNING: No target tagger specified"
         if TRAINGEN:
             print >>sys.stderr, "Loading phrasetable..."
-            phrasetable = PhraseTable(phrasetablefile)
+            phrasetable = PhraseTable(phrasetablefile, False, False, "|||", 5, 4, 1)
         else:
             phrasetable = []            
         trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
