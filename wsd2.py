@@ -103,6 +103,7 @@ class TestSet(object):
             if r != 0:
                 raise Exception("ucto failed")
             
+            print >>sys.stderr, "Processing ucto output from "+ tmpfilename + '.out'
             f = open(tmpfilename + '.out','r')
             for i, line in enumerate(f):
                 if i == len(tmpmap): break
