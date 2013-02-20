@@ -10,6 +10,7 @@ from pynlpl.formats.moses import PhraseTable
 from pynlpl.tagger import Tagger
 import timbl
 import glob
+import random
 
 WSDDIR = os.path.dirname(__file__)
 
@@ -34,9 +35,15 @@ class TestSet(object):
     languages = {
         'english': 'en',
         'french': 'fr',
+        u"français": 'fr',
         'italian': 'it',
+        'italiano': 'it',
         'german': 'de',
+        'deutsch': 'de',
         'dutch': 'nl',
+        'nederlands': 'nl',
+        'spanish': 'es',
+        u"español": 'es',
     }
 
     def __init__(self, filenames = []):
@@ -51,18 +58,26 @@ class TestSet(object):
 
     def load(self, filename):  
         """Read test or trial data and parses it into a usable datastructure"""
+        print >>sys.stderr, "Loading and tokenising " + filename.encode('utf-8')
         tree = ElementTree.parse(filename)
         root = tree.xpath("/corpus")
         if len(root) > 0: 
             root = root[0]
         else:
             raise Exception("This is not a valid test-file!")
-        self.lang = TestSet.languages[root.attrib['lang']]        
+        self.lang = TestSet.languages[root.attrib['lang'].lower()]        
+        
+
 
         for lemmanode in root.findall('.//lexelt'):
             lemma, pos = lemmanode.attrib['item'].rsplit(".",1)
 
             instances = {}
+            tmpfilename = '/tmp/' + "%032x" % random.getrandbits(128)
+            tmpfile = codecs.open(tmpfilename,'w','utf-8')
+            tmpmap = []
+            idmap = []
+            
             for instancenode in lemmanode.findall('.//instance'):            
                 id = int(instancenode.attrib['id'])
                 contextnode = instancenode.find('.//context')
@@ -78,7 +93,67 @@ class TestSet(object):
                 if not rightcontext: rightcontext = ""
                 if rightcontext and not isinstance(rightcontext, unicode):
                     rightcontext = unicode(rightcontext, 'utf-8')
-                instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
+                idmap.append(id)
+                tmpmap.append( (leftcontext, head, rightcontext) )
+                tmpfile.write(leftcontext + head + rightcontext)
+                #instances[id] = (leftcontext,head,rightcontext) #room for output classes is reserved (set to None)
+            
+            tmpfile.close()
+            r = os.system('ucto -L' + self.lang +  ' -m -n ' + tmpfilename + ' ' + tmpfilename +'.out')
+            if r != 0:
+                raise Exception("ucto failed")
+            
+            f = open(tmpfilename + '.out','r')
+            for i, line in enumerate(f):
+                if i == len(tmpmap): break
+                leftcontext_untok, head, rightcontext_untok = tmpmap[i]
+                line = line.strip()
+                words = line.split(' ')
+                
+                origindex = len(leftcontext_untok.split(' '))
+                mindistance = 9999
+                focusindex = -1
+                
+                for i, word in enumerate(words): 
+                    if word == head:
+                        distance = abs(origindex - i)
+                        if distance <= mindistance:
+                            focusindex = i
+                            mindistance = distance                 
+                                               
+                                            
+                if focusindex  == -1:
+                    #final partial match:
+                    for i, word in enumerate(words): 
+                        partialfound = word.find(head)
+                        if partialfound != -1:
+                            distance = abs(origindex - i)
+                            if distance <= mindistance:
+                                focusindex = i
+                                mindistance = distance
+                    
+                    if focusindex != -1:
+                        leftcontext = u" ".join(words[:focusindex])
+                        if partialfound > 0:
+                            leftcontext += " " + words[focusindex][:partialfound]
+                        head = word                    
+                        rightcontext = u" ".join(words[focusindex + 1:])
+                        
+                        
+                        if words[focusindex][partialfound + len(head):]:
+                            rightcontext += ' ' +words[focusindex][partialfound + len(head):] 
+                    else:            
+                        raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(words).encode('utf-8'))
+                else:
+                    leftcontext = u" ".join(words[:focusindex])
+                    head = word                    
+                    rightcontext = u" ".join(words[focusindex + 1:])
+
+                                               
+                instances[idmap[i]] = (leftcontext, head, rightcontext)
+                
+            f.close()
+            
 
             self.lexunits[lemma+'.'+pos] = instances
             self.orderedlemmas.append( (lemma,pos) ) #(so we can keep right ordering)
@@ -520,7 +595,7 @@ class CLWSD2Tester(object):
                             mindistance = distance 
                            
                 if focusindex == -1: 
-                    raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(sourcewords).encode('utf-8'))
+                    raise Exception("Focus word not found after tagging! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(sourcewords).encode('utf-8'))
                          
                 #grab local context features
                 features = []                    
