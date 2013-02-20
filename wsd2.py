@@ -428,7 +428,7 @@ class CLWSD2Trainer(object):
         print >>sys.stderr, "Training " + str(len(self.classifiers)) + " classifiers"
         for classifier in self.classifiers:
             self.classifiers[classifier].train()
-            self.classifiers[classifier].writeInstanceBase(self.classifiers[classifier].fileprefix + ".ibase")
+            self.classifiers[classifier].save()
             
         print >>sys.stderr, "Parameter optimisation"
         for f in glob.glob(self.outputdir + '/*.train'):
