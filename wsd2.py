@@ -641,6 +641,8 @@ class CLWSD2Tester(object):
             #score
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
+            
+            self.scorereport()
                  
     def scorereport(self):
         f = codecs.open(self.outputdir + '/results')
@@ -719,7 +721,7 @@ if __name__ == "__main__":
         if o == "--train":	
             TRAIN = True
         elif o == "--test":	
-            TEST = True            
+            TEST = True              
         elif o == "--nogen":	
             TRAINGEN = False                        
         elif o == "-s":
