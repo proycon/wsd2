@@ -636,8 +636,8 @@ class CLWSD2Tester(object):
             out_oof.close()
                 
             #score
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt')
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof')
+            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
+            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
                  
         
         
