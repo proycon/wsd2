@@ -668,7 +668,7 @@ class CLWSD2Tester(object):
 
         f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
         for filename in glob.glob(self.outputdir + '/*.oof.results'):
-            lemma,pos = os.path.basename(filename.split('.'))[:2]
+            lemma,pos = os.path.basename(filename).split('.')[:2]
             f_in = open(filename,'r')
             for line in f_in:
                 if line[:12] == "precision = ":                    
