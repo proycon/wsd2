@@ -527,7 +527,6 @@ def paramsearch2timblargs(filename):
             opts += " -L " + field[1:]                
         elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
             opts += " -k " + field[1:]        
-    print opts
     return opts
 
     
