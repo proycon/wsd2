@@ -661,7 +661,7 @@ class CLWSD2Tester(object):
                     plist.append( p )
                     rlist.append( r )
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
-            f.close()
+            f_in.close()
             
             f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
 
@@ -677,7 +677,7 @@ class CLWSD2Tester(object):
                     plist.append( p )
                     rlist.append( r )
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
-            f.close()
+            f_in.close()
             
             f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
                         
