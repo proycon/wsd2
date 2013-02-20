@@ -114,22 +114,21 @@ class TestSet(object):
                 mindistance = 9999
                 focusindex = -1
                 
-                for i, word in enumerate(words): 
+                for j, word in enumerate(words): 
                     if word == head:
-                        distance = abs(origindex - i)
+                        distance = abs(origindex - j)
                         if distance <= mindistance:
-                            focusindex = i
+                            focusindex = j
                             mindistance = distance                 
-                                               
-                                            
+                                                                                           
                 if focusindex  == -1:
                     #final partial match:
-                    for i, word in enumerate(words): 
+                    for j, word in enumerate(words): 
                         partialfound = word.find(head)
                         if partialfound != -1:
-                            distance = abs(origindex - i)
+                            distance = abs(origindex - j)
                             if distance <= mindistance:
-                                focusindex = i
+                                focusindex = j
                                 mindistance = distance
                     
                     if focusindex != -1:
