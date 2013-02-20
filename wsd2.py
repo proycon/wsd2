@@ -417,6 +417,12 @@ class CLWSD2Trainer(object):
         
         self.run2() 
                 
+    def loadclassifiers(self):            
+        for lemma,pos in self.targetwords:            
+            print >>sys.stderr, "Loading " + lemma.encode('utf-8')
+
+            if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train'):
+                self.classifiers[(lemma,pos,self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)        
             
     def run2(self):        
         print >>sys.stderr, "Training " + str(len(self.classifiers)) + " classifiers"
@@ -431,23 +437,24 @@ class CLWSD2Trainer(object):
         
 def paramsearch2timblargs(filename):
     f = open(filename)
-    for line in f:
-        opts = ""
-        for field in line.split("."):
-            if field in ("IB1","IG","TRIBL","IB2","TRIBL2"):
-                opts += "-a " + field
-            elif field in ("M","C","D","DC","L","J","N","I","O"):
-                opts += " -m " + field
-            elif field in ("nw","gr","ig","x2","sv"):
-                opts += " -w " + field
-            elif field in ("Z","IL") or field[0:3] == "ED:":
-                opts += " -d " + field
-            elif len(field) >= 2 and field[0] == "L" and field[1:].isdigit():
-                opts += " -L " + field[1:]                
-            elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
-                opts += " -k " + field[1:]        
-        print opts
+    lines = f.readlines()
     f.close()
+    line = lines[-1].strip()
+    opts = ""
+    for field in line.split("."):
+        if field in ("IB1","IG","TRIBL","IB2","TRIBL2"):
+            opts += "-a " + field
+        elif field in ("M","C","D","DC","L","J","N","I","O"):
+            opts += " -m " + field
+        elif field in ("nw","gr","ig","x2","sv"):
+            opts += " -w " + field
+        elif field in ("Z","IL") or field[0:3] == "ED:":
+            opts += " -d " + field
+        elif len(field) >= 2 and field[0] == "L" and field[1:].isdigit():
+            opts += " -L " + field[1:]                
+        elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
+            opts += " -k " + field[1:]        
+    print opts
     return opts
 
     
