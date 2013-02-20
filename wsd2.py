@@ -11,6 +11,9 @@ from pynlpl.tagger import Tagger
 import timbl
 import glob
 import random
+#import matplotlib
+#matplotlib.use('Agg')
+#import matplotlib.pyplot
 
 WSDDIR = os.path.dirname(__file__)
 
@@ -639,6 +642,47 @@ class CLWSD2Tester(object):
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
                  
+    def scorereport(self):
+        f = codecs.open(self.outputdir + '/results')
+        f.write('BEST RESULTS\n-------------\n')
+        
+        rlist = []
+        plist = []
+        
+        for filename in glob.glob(self.outputdir + '/*.best.results'):
+            lemma,pos = os.path.basename(filename.split('.'))[:2]
+            f_in = open(filename,'r')
+            for line in f_in:
+                if line[:12] == "precision = ":                    
+                    p = float(line[13:line.find(',')] )
+                    r =  float(line[line.find('recall = ') + 9:] )
+                    plist.append( p )
+                    rlist.append( r )
+                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
+            f.close()
+            
+            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
+
+
+        f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
+        for filename in glob.glob(self.outputdir + '/*.oof.results'):
+            lemma,pos = os.path.basename(filename.split('.'))[:2]
+            f_in = open(filename,'r')
+            for line in f_in:
+                if line[:12] == "precision = ":                    
+                    p = float(line[13:line.find(',')] )
+                    r =  float(line[line.find('recall = ') + 9:] )
+                    plist.append( p )
+                    rlist.append( r )
+                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
+            f.close()
+            
+            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
+                        
+            
+            
+        f.close()
+        os.system("cat " + self.outputdir + '/results')
         
         
 if __name__ == "__main__":
