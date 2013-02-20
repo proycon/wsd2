@@ -660,7 +660,8 @@ class CLWSD2Tester(object):
                     r =  float(line[line.find('recall = ') + 9:] )
                     plist.append( p )
                     rlist.append( r )
-                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
+                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
+                    break 
             f_in.close()
             
         f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
@@ -676,7 +677,8 @@ class CLWSD2Tester(object):
                     r =  float(line[line.find('recall = ') + 9:] )
                     plist.append( p )
                     rlist.append( r )
-                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
+                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
+                    break 
             f_in.close()
             
         f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
