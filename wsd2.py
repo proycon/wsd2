@@ -600,14 +600,16 @@ class CLWSD2Tester(object):
                 for j in range(focusindex - self.contextsize, focusindex + 1 + self.contextsize):
                     if j > 0 and j < len(sourcewords):
                         features.append(sourcewords[j])
-                        if self.DOPOS and sourcepostags[j]:
-                            features.append(sourcepostags[j])
-                        else:
-                            features.append("?")
-                        if self.DOLEMMAS and sourcelemmas[j]: 
-                            features.append(sourcelemmas[j])	
-                        else:
-                            features.append("?")
+                        if self.DOPOS:
+                            if sourcepostags[j]:
+                                features.append(sourcepostags[j])
+                            else:
+                                features.append("?")
+                        if self.DOLEMMAS:
+                            if sourcelemmas[j]: 
+                                features.append(sourcelemmas[j])
+                            else:
+                                features.append("?")
                     else:
                         features.append("{NULL}")
                         if self.DOPOS: features.append("{NULL}")
