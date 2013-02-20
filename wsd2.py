@@ -546,8 +546,8 @@ class CLWSD2Tester(object):
                 bestscore = max(distribution.values())
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
                 fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]                                  
-                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' :: ' + ';'.join(bestsenses) + ';\n')
-                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + id + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
+                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + ';'.join(bestsenses) + ';\n')
+                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
                 
                 print >>sys.stderr, "\t" + distribution
                 
