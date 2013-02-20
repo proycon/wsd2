@@ -579,9 +579,9 @@ class CLWSD2Tester(object):
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
                 
-                sourcewords_untok = leftcontext + ' ' + head + ' ' + rightcontext
+                sourcewords_pretagged = leftcontext + ' ' + head + ' ' + rightcontext
                 
-                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_untok.split(' '))              
+                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_pretagged.split(' '))              
                 #find new head position (may have moved due to tokenisation)
                 origindex = len(leftcontext.split(' '))
                 mindistance = 9999
