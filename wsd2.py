@@ -582,7 +582,7 @@ class CLWSD2Tester(object):
             out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
-                print >>sys.stderr, lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
+                print >>sys.stderr, "--> " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
                 
                 sourcewords_pretagged = leftcontext + ' ' + head + ' ' + rightcontext
                 
@@ -629,7 +629,8 @@ class CLWSD2Tester(object):
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + ';'.join(bestsenses) + ';\n')
                 out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
                 
-                print >>sys.stderr, "\t" + repr(distribution)
+                print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + repr(distribution)
+                
                 
             out_best.close()
             out_oof.close()
