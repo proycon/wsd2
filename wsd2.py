@@ -652,7 +652,7 @@ class CLWSD2Tester(object):
         plist = []
         
         for filename in glob.glob(self.outputdir + '/*.best.results'):
-            lemma,pos = os.path.basename(filename.split('.'))[:2]
+            lemma,pos = os.path.basename(filename).split('.')[:2]
             f_in = open(filename,'r')
             for line in f_in:
                 if line[:12] == "precision = ":                    
