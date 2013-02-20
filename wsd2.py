@@ -642,7 +642,7 @@ class CLWSD2Tester(object):
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
             
-            self.scorereport()
+        self.scorereport()
                  
     def scorereport(self):
         f = codecs.open(self.outputdir + '/results','w','utf-8')
@@ -663,7 +663,7 @@ class CLWSD2Tester(object):
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
             f_in.close()
             
-            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
+            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
 
 
         f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
@@ -679,7 +679,7 @@ class CLWSD2Tester(object):
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
             f_in.close()
             
-            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist))))
+            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
                         
             
             
