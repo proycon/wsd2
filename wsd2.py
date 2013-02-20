@@ -656,14 +656,14 @@ class CLWSD2Tester(object):
             f_in = open(filename,'r')
             for line in f_in:
                 if line[:12] == "precision = ":                    
-                    p = float(line[13:line.find(',')] )
+                    p = float(line[12:line.find(',')] )
                     r =  float(line[line.find('recall = ') + 9:] )
                     plist.append( p )
                     rlist.append( r )
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
             f_in.close()
             
-            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
+        f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
 
 
         f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
@@ -672,14 +672,14 @@ class CLWSD2Tester(object):
             f_in = open(filename,'r')
             for line in f_in:
                 if line[:12] == "precision = ":                    
-                    p = float(line[13:line.find(',')] )
+                    p = float(line[12:line.find(',')] )
                     r =  float(line[line.find('recall = ') + 9:] )
                     plist.append( p )
                     rlist.append( r )
                     f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n") 
             f_in.close()
             
-            f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
+        f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
                         
             
             
