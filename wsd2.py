@@ -288,7 +288,7 @@ class CLWSD2Trainer(object):
 
 
     def make_bag_of_words(self, focuslemma, focuspos, bow_absolute_threshold, count, totalcount):
-        print >>sys.stderr, "Computing and writing bag for ",focuslemma.encode('utf-8') + '.' + focuspos,"..."
+        print >>sys.stderr, "Computing and writing bag for " + focuslemma.encode('utf-8') + "..."
 
         if not focuslemma+'.'+focuspos in count:
             return [] #focus word has not been counted for
@@ -405,7 +405,7 @@ class CLWSD2Trainer(object):
                             if foundindex != -1:                                
                                 if Pts > bestscore: 
                                     bestscore = Pts
-                                    best = (target, Pts, foundindex)                                                
+                                    best = (target, Pts, foundindex)
                         
                         if not best:
                             print >>sys.stderr,"No translation options match"
@@ -452,16 +452,17 @@ class CLWSD2Trainer(object):
                                 self.classifiers[(sourcelemma,sourcepos, self.targetlang)].append(localfeatures, target)    
                                 
                         elif self.bagofwords:
-                            if (sourcelemma,sourcepos) in count:
-                                if not target in count[(sourcelemma, sourcepos)]:
-                                    count[(sourcelemma,sourcepos)][target] = {}
-                                
-                                for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
-                                    if j != i:
-                                        if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
-                                            count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
-                                        else:
-                                            count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1
+                            if not (sourcelemma,sourcepos) in count:
+                                count[(sourcelemma,sourcepos)] = {}
+                            if not target in count[(sourcelemma, sourcepos)]:
+                                count[(sourcelemma,sourcepos)][target] = {}
+                            
+                            for j, (contextword, contextpos, contextlemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):
+                                if j != i:
+                                    if not (contextlemma, contextpos) in count[(sourcelemma,sourcepos)][target]:
+                                        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] = 1
+                                    else:
+                                        count[(sourcelemma, sourcepos)][target][(contextlemma,contextpos)] += 1
                          
                         print >>sys.stderr                           
 
@@ -470,6 +471,7 @@ class CLWSD2Trainer(object):
             if finalstage:
                 break
             elif self.bagofwords:
+                print >>sys.stderr, "Making bags of words"
                 for lemma,pos in count.keys():        
                     if self.compute_bow_params:
                         bags[(lemma,pos)] = self.make_bag_of_words(lemma,pos, self.bow_absolute_threshold,count, totalcount)            
