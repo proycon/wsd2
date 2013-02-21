@@ -341,12 +341,18 @@ class CLWSD2Trainer(object):
                 print >>sys.stderr, "Reading texts and extracting features (last pass)"
             f_source = codecs.open(self.sourcefile,'r','utf-8')
             f_target = codecs.open(self.targetfile,'r','utf-8')
+            
+            if self.gizamodel_s2t:
+                iter_s2t = iter(self.gizamodel_s2t)
+                iter_t2s = iter(self.gizamodel_t2s)
+                
+            
             for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                    
                 print >>sys.stderr, " @" + str(sentencenum+1)            
                 
                 if self.gizamodel_s2t: 
-                    s2t = self.gizamodel_s2t.next()
-                    t2s = self.gizamodel_t2s.next()
+                    s2t = iter_s2t.next() #self.gizamodel_s2t.next()
+                    t2s = iter_t2s.next() #self.gizamodel_t2s.next()
                     intersection = s2t.intersect(t2s) 
                 else: 
                     intersection = None
