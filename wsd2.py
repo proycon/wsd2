@@ -348,12 +348,15 @@ class CLWSD2Trainer(object):
                 
             
             for sentencenum, (sourceline, targetline) in enumerate(zip(f_source, f_target)):                    
-                print >>sys.stderr, " @" + str(sentencenum+1)            
+                print >>sys.stderr, "@" + str(sentencenum+1)            
                 
                 if self.gizamodel_s2t: 
                     s2t = iter_s2t.next() #self.gizamodel_s2t.next()
                     t2s = iter_t2s.next() #self.gizamodel_t2s.next()
+                    print >>sys.stderr, "S2T: " + repr(s2t)
+                    print >>sys.stderr, "T2S: " + repr(t2s)
                     intersection = s2t.intersect(t2s) 
+                    print >>sys.stderr, "INT: " + repr(intersection)
                 else: 
                     intersection = None
                 
