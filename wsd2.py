@@ -534,24 +534,25 @@ class CLWSD2Trainer(object):
         
         
 def paramsearch2timblargs(filename):
+    opts = ""
     f = open(filename)
     lines = f.readlines()
     f.close()
-    line = lines[-1].strip()
-    opts = ""
-    for field in line.split("."):
-        if field in ("IB1","IG","TRIBL","IB2","TRIBL2"):
-            opts += "-a " + field
-        elif field in ("M","C","D","DC","L","J","N","I","O"):
-            opts += " -m " + field
-        elif field in ("nw","gr","ig","x2","sv"):
-            opts += " -w " + field
-        elif field in ("Z","IL") or field[0:3] == "ED:":
-            opts += " -d " + field
-        elif len(field) >= 2 and field[0] == "L" and field[1:].isdigit():
-            opts += " -L " + field[1:]                
-        elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
-            opts += " -k " + field[1:]        
+    if lines:
+        line = lines[-1].strip()
+        for field in line.split("."):
+            if field in ("IB1","IG","TRIBL","IB2","TRIBL2"):
+                opts += "-a " + field
+            elif field in ("M","C","D","DC","L","J","N","I","O"):
+                opts += " -m " + field
+            elif field in ("nw","gr","ig","x2","sv"):
+                opts += " -w " + field
+            elif field in ("Z","IL") or field[0:3] == "ED:":
+                opts += " -d " + field
+            elif len(field) >= 2 and field[0] == "L" and field[1:].isdigit():
+                opts += " -L " + field[1:]                
+            elif len(field) >= 2 and field[0] == "k" and field[1:].isdigit():
+                opts += " -k " + field[1:]        
     return opts
 
     
