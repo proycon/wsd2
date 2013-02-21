@@ -605,7 +605,7 @@ class CLWSD2Tester(object):
             out_oof = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
                 
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
-                print >>sys.stderr, "--> " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1)
+                print >>sys.stderr, "--> " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + leftcontext.encode('utf-8') + " *" + head.encode('utf-8') + "* " + rightcontext.encode('utf-8')
                 
                 sourcewords_pretagged = leftcontext + ' ' + head + ' ' + rightcontext
                 
