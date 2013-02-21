@@ -127,6 +127,7 @@ class TestSet(object):
                             mindistance = distance                 
                                                                                            
                 if focusindex  == -1:
+                    print >>sys.stderr,"Full match not found, attempting to find partial match" 
                     #final partial match:
                     for j, word in enumerate(words): 
                         partialfound = word.find(head)
@@ -139,18 +140,16 @@ class TestSet(object):
                     if focusindex != -1:
                         leftcontext = u" ".join(words[:focusindex])
                         if partialfound > 0:
-                            leftcontext += " " + words[focusindex][:partialfound]
-                        head = word                    
+                            leftcontext += " " + words[focusindex][:partialfound]             
                         rightcontext = u" ".join(words[focusindex + 1:])
                         
                         
                         if words[focusindex][partialfound + len(head):]:
-                            rightcontext += ' ' +words[focusindex][partialfound + len(head):] 
+                            rightcontext = words[focusindex][partialfound + len(head):] + ' ' + rightcontext 
                     else:            
                         raise Exception("Focus word not found after tokenisation! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(words).encode('utf-8'))
                 else:
                     leftcontext = u" ".join(words[:focusindex])
-                    head = word                    
                     rightcontext = u" ".join(words[focusindex + 1:])
 
                                                
@@ -650,7 +649,7 @@ class CLWSD2Tester(object):
                 
                 bestscore = max(distribution.values())
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
-                fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]                                  
+                fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + ';'.join(bestsenses) + ';\n')
                 out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
                 
