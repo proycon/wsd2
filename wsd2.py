@@ -381,7 +381,10 @@ class CLWSD2Trainer(object):
                         target = None
                         Pst = Pts = 0
                         if intersection != None:
-                            target = intersection.getalignedtarget(i)
+                            target, foundindex = intersection.getalignedtarget(i)
+                            if isinstance(foundindex, tuple):
+                                targetl = foundindex[1]
+                                foundindex = foundindex[0]
                             
                         
                         #Is this sourceword aligned? 
@@ -451,7 +454,10 @@ class CLWSD2Trainer(object):
                             #get lemmatised form of target word
                             if self.targettagger:
                                 if ' ' in target:
-                                    target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
+                                    if self.phrasetable:
+                                        target = ' '.join(targetlemmas[foundindex:foundindex+len(targetl)])
+                                    else:
+                                        target = ' '.join(targetlemmas[foundindex:foundindex+targetl])
                                 else:
                                     target = targetlemmas[foundindex] 
                             
