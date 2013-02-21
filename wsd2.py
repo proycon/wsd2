@@ -220,7 +220,7 @@ def targetmatch(target, senses):
 class CLWSD2Trainer(object):    
     
     def __init__(self, outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
-        if not os.path.exists(phrasetablefile):
+        if phrasetablefile and not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
             raise Exception("Sourcefile does not exist: " + sourcefile)
