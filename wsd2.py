@@ -657,7 +657,7 @@ class CLWSD2Tester(object):
             #load bags
             for bagfile in glob.glob(outputdir + "/*.bag"):
                 print >>sys.stderr, "Loading bag " + bagfile
-                focuslemma,focuspos,_ = os.path.basename(bagfile).split(".")
+                focuslemma,focuspos,_ ,_= os.path.basename(bagfile).split(".")
                 focuslemma = unicode(focuslemma,'utf-8')
                 self.bags[(focuslemma,focuspos)] = []
                 f = codecs.open(bagfile,'r','utf-8')
