@@ -33,7 +33,8 @@ def usage():
     print >> sys.stderr,"          3) Filter out words with a global corpus occurence less than x"
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
-    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "    
+    print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
+    print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"    
         
 class TestSet(object):
     languages = {
@@ -220,7 +221,7 @@ def targetmatch(target, senses):
     
 class CLWSD2Trainer(object):    
     
-    def __init__(self, outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
+    def __init__(self, outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords, compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest = 0.5):      
         if phrasetablefile and not os.path.exists(phrasetablefile):
             raise Exception("Moses phrasetable does not exist: " + phrasetablefile)
         if not os.path.exists(sourcefile):
@@ -247,6 +248,7 @@ class CLWSD2Trainer(object):
         self.contextsize = contextsize
         self.DOPOS = DOPOS
         self.DOLEMMAS = DOLEMMAS
+        self.DOVOTER = DOVOTER
         self.exemplarweights = exemplarweights
         self.outputdir = outputdir
         self.classifiers = {}
@@ -313,7 +315,7 @@ class CLWSD2Trainer(object):
             f.write(lemma + '\t' + pos + '\t' + sense + '\t' + str(c) + '\t' + str(p) + '\n')
         f.close()
 
-        print >>sys.stderr, "\tFound " + len(bag) + " keywords"
+        print >>sys.stderr, "\tFound " + str(len(bag)) + " keywords"
         return bag
 
 
@@ -589,7 +591,7 @@ def paramsearch2timblargs(filename):
 
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER):        
         self.sourcetagger = sourcetagger
         
         
@@ -602,6 +604,7 @@ class CLWSD2Tester(object):
         self.contextsize = contextsize
         self.DOPOS = DOPOS
         self.DOLEMMAS = DOLEMMAS
+        self.DOVOTER = DOVOTER
         self.exemplarweights = exemplarweights
         self.outputdir = outputdir
 
@@ -793,7 +796,7 @@ class CLWSD2Tester(object):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:", ["train","test", "nogen", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:V", ["train","test", "nogen", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -806,6 +809,7 @@ if __name__ == "__main__":
     targetwordsfile = WSDDIR + "/data/targetwords.trial"
     DOLEMMAS = False
     DOPOS = False
+    DOVOTER = False
     sourcetagger = None
     targettagger = None
     outputdir = "."
@@ -881,6 +885,8 @@ if __name__ == "__main__":
                bow_filter_threshold = int(fields[2])
         elif o == '-R':             
             compute_bow_params = True
+        elif o == '-V':
+            DOVOTER = True
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
@@ -916,7 +922,7 @@ if __name__ == "__main__":
             gizamodel_s2t = None
             gizamodel_t2s = None
                    
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
         if not TRAINGEN:
             trainer.loadclassifiers()
             trainer.run2()
@@ -924,5 +930,5 @@ if __name__ == "__main__":
             trainer.run()
         
     if TEST:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER)
         tester.run()
