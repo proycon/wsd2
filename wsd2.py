@@ -292,7 +292,8 @@ class CLWSD2Trainer(object):
     def make_bag_of_words(self, focuslemma, focuspos, bow_absolute_threshold, count, totalcount):
         print >>sys.stderr, "Computing and writing bag for " + focuslemma.encode('utf-8') + "..."
 
-        if not focuslemma+'.'+focuspos in count:
+        if not (focuslemma,focuspos) in count:
+            print >>sys.stderr, "   WARNING: No count found!"
             return [] #focus word has not been counted for
 
         bag = []
@@ -311,6 +312,7 @@ class CLWSD2Trainer(object):
             f.write(lemma + '\t' + pos + '\t' + sense + '\t' + str(c) + '\t' + str(p) + '\n')
         f.close()
 
+        print >>sys.stderr, "\tFound " + len(bag) + " keywords"
         return bag
 
 
