@@ -609,6 +609,19 @@ def paramsearch2timblargs(filename):
                 opts += " -k " + field[1:]        
     return opts
 
+def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance)     
+    bestscore = max(distribution.values())
+    bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
+    fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
+    bestsenses_s = ';'.join(bestsenses)
+    fivebestsenses_s = ';'.join(fivebestsenses)
+    if not isinstance(bestsenses_s,unicode): bestsenses_s  = unicode(bestsenses_s,'utf-8')
+    if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
+    out_best.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
+    out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
+    print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(id) + ": " + repr(distribution)
+
+
     
 class CLWSD2Tester(object):          
     def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER):        
@@ -746,18 +759,9 @@ class CLWSD2Tester(object):
                 print " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
                 
-                bestscore = max(distribution.values())
-                bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
-                fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
-                bestsenses_s = ';'.join(bestsenses)
-                fivebestsenses_s = ';'.join(fivebestsenses)
-                if not isinstance(bestsenses_s,unicode): bestsenses_s  = unicode(bestsenses_s,'utf-8')
-                if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
-                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
-                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
-                if DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
-                print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + repr(distribution)
+                processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance)
                 
+                if self.DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
                 
             out_best.close()
             out_oof.close()
@@ -768,54 +772,54 @@ class CLWSD2Tester(object):
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
             
-        self.scorereport()
+        scorereport(outputdir)
                  
-    def scorereport(self):
-        f = codecs.open(self.outputdir + '/results','w','utf-8')
-        f.write('BEST RESULTS\n-------------\n')
+def scorereport(self, outputdir):
+    f = codecs.open(outputdir + '/results','w','utf-8')
+    f.write('BEST RESULTS\n-------------\n')
+    
+    rlist = []
+    plist = []
+    
+    for filename in glob.glob(outputdir + '/*.best.results'):
+        lemma,pos = os.path.basename(filename).split('.')[:2]
+        f_in = open(filename,'r')
+        for line in f_in:
+            if line[:12] == "precision = ":                    
+                p = float(line[12:line.find(',')] )
+                r =  float(line[line.find('recall = ') + 9:] )
+                plist.append( p )
+                rlist.append( r )
+                f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
+                break 
+        f_in.close()
         
-        rlist = []
-        plist = []
+    f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
+
+
+    rlist = []
+    plist = []
+
+    f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
+    for filename in glob.glob(outputdir + '/*.oof.results'):
+        lemma,pos = os.path.basename(filename).split('.')[:2]
+        f_in = open(filename,'r')
+        for line in f_in:
+            if line[:12] == "precision = ":                    
+                p = float(line[12:line.find(',')] )
+                r =  float(line[line.find('recall = ') + 9:] )
+                plist.append( p )
+                rlist.append( r )
+                f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
+                break 
+        f_in.close()
         
-        for filename in glob.glob(self.outputdir + '/*.best.results'):
-            lemma,pos = os.path.basename(filename).split('.')[:2]
-            f_in = open(filename,'r')
-            for line in f_in:
-                if line[:12] == "precision = ":                    
-                    p = float(line[12:line.find(',')] )
-                    r =  float(line[line.find('recall = ') + 9:] )
-                    plist.append( p )
-                    rlist.append( r )
-                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
-                    break 
-            f_in.close()
-            
-        f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
-
-
-        rlist = []
-        plist = []
-
-        f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
-        for filename in glob.glob(self.outputdir + '/*.oof.results'):
-            lemma,pos = os.path.basename(filename).split('.')[:2]
-            f_in = open(filename,'r')
-            for line in f_in:
-                if line[:12] == "precision = ":                    
-                    p = float(line[12:line.find(',')] )
-                    r =  float(line[line.find('recall = ') + 9:] )
-                    plist.append( p )
-                    rlist.append( r )
-                    f.write(lemma + ":\t" + str(p) + "\t" + str(r) + "\n")
-                    break 
-            f_in.close()
-            
-        f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
-                        
-            
-            
-        f.close()
-        os.system("cat " + self.outputdir + '/results')
+    f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
+                    
+        
+        
+    f.close()
+    os.system("cat " + outputdir + '/results')
         
         
 if __name__ == "__main__":

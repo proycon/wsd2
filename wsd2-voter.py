@@ -62,14 +62,17 @@ for lemma, pos in targetwords:
 testset = wsd2.TestSet(testfiles)
 
 votertraindata = {}
+votertestdata = {}
 for lemma,pos in testset.lemmas():       
     print >>sys.stderr, "Processing " + lemma.encode('utf-8')
     votertraindata[(lemma,pos)] = {}
+    votertestdata[(lemma,pos)] = {}
     
     for classifierdir in classifierdirs:  
         classifiername = os.path.basename(classifierdir)
         
         votertraindata[(lemma,pos)][classifiername] = []
+        
         
         if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.votertrain'):
             f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.votertrain')
@@ -79,7 +82,20 @@ for lemma,pos in testset.lemmas():
                 votertraindata[(lemma,pos)][classifiername].append( (fields[0], fields[1]) )  #(train,gold)
             f.close() 
         else:
-            print >>sys.stderr, "No votertrain found for " + lemma.encode('utf-8')              
+            raise Exception("No votertrain found for " + lemma.encode('utf-8') + " in " + classifierdir)              
+            
+
+        if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.votertest'):
+            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.votertest')
+            for line in f:
+                line = line.strip()
+                fields = line.split('\t')
+                if not id in votertestdata[(lemma,pos)]: 
+                    votertestdata[(lemma,pos)][id] = {}
+                votertestdata[(lemma,pos)][id][classifiername] =  (fields[0], fields[1], fields[2])  #(id, focusword, sense)
+            f.close() 
+        else:
+            raise Exception("No votertest found for " + lemma.encode('utf-8') + " in " + classifierdir)                          
             
 #TODO: integrity check?    
     
@@ -92,7 +108,7 @@ for lemma,pos in testset.lemmas():
     for classifierdir in classifierdirs:  
         classifiername = os.path.basename(classifierdir)
         features = []
-        for feature, classlabel in votertraindata[(lemma,pos)]:
+        for feature, classlabel in votertraindata[(lemma,pos)][classifiername]:
             features.append(feature)    
         classifiers[(lemma,pos)].append(features, classlabel)
         
@@ -100,13 +116,42 @@ for lemma,pos in testset.lemmas():
 print >>sys.stderr, "Training " + str(len(classifiers)) + " classifiers"
 for classifier in classifiers:
     classifiers[classifier].train()
-    classifiers[classifier].save()
+    #classifiers[classifier].save()
     
-print >>sys.stderr, "Parameter optimisation"
+print >>sys.stderr, "Voter Parameter optimisation"
 for f in glob.glob(outputdir + '/*.train'):
     os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch")
 
+print >>sys.stderr, "Testing classifiers"
+basictimbloptions = timbloptions
+for lemma,pos in testset.lemmas():            
+    print >>sys.stderr, "Processing " + lemma.encode('utf-8')
 
+    timbloptions = basictimbloptions 
+    if os.path.exists(outputdir + '/' + lemma +'.' + pos + '.' + targetlang + '.train.paramsearch'):
+        o = wsd2.paramsearch2timblargs(outputdir + '/' + lemma +'.' + pos + '.' + targetlang + '.train.paramsearch')
+        timbloptions += " " + o 
+        print >>sys.stderr, "Parameter optimisation loaded: " + o
+    else:            
+        print >>sys.stderr, "NOTICE: No parameter optimisation found!"
+     
+    out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
+    out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')     
+     
+    for id in sorted(votertestdata[(lemma,pos)]):     
+        features = []
+        for classifierdir in classifierdirs:  
+            classifiername = os.path.basename(classifierdir)
+            features.append( votertestdata[(lemma,pos)][id][classifiername] )
+        sense, distribution, distance = classifiers[(lemma,pos)].classify(features)
+        print >>sys.stderr, "--> Classifying " + id + " :" + repr(features)
+        wsd2.processresult(out_best, out_oof, id, lemma, pos, targetlang, sense, distribution, distance)
 
-
+    out_best.close()
+    out_oof.close()
+         
+    #score
+    os.system('perl ' + wsd2.WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + wsd2.WSDDIR + '/data/trial/' + targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
+    os.system('perl ' + wsd2.WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + wsd2.WSDDIR + '/data/trial/' + targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
     
+wsd2.scorereport(outputdir)        
