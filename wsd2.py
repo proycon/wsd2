@@ -260,29 +260,29 @@ class CLWSD2Trainer(object):
         self.maxdivergencefrombest = maxdivergencefrombest
 
     def probability_sense_given_keyword(self, focuslemma,focuspos,senselabel, lemma,pos, count, totalcount):
-        if not focuslemma+'.'+focuspos in count:
-            print "focusword not seen", focuslemma +'.'+ focuspos
+        if not (focuslemma,focuspos) in count:
+            print "focusword not seen", focuslemma.encode('utf-8') +'.'+ focuspos
             return 0 #focus word has not been counted for
 
-        if not senselabel in count[focuslemma+'.'+focuspos]:
-            print "sense not seen:", senselabel
+        if not senselabel in count[(focuslemma,focuspos)]:
+            print "sense not seen:", senselabel.encode('utf-8')
             return 0 #sense has never been seen for this focus word
 
-        if not lemma+'.'+pos in totalcount:
-            print "keyword not seen:", lemma+'.'+pos
+        if not (lemma,pos) in totalcount:
+            print "keyword not seen:", lemma.encode('utf-8')+'.'+pos
             return 0 #keyword has never been seen
 
         Ns_kloc = 0.0
-        if lemma+'.'+pos in count[focuslemma+'.'+focuspos][senselabel]:
-            Ns_kloc = float(count[focuslemma+'.'+focuspos][senselabel][lemma+'.'+pos])        
+        if (lemma,pos) in count[(focuslemma,focuspos)][senselabel]:
+            Ns_kloc = float(count[(focuslemma,focuspos)][senselabel][(lemma,pos)])        
 
         Nkloc = 0
-        for sense in count[focuslemma+'.'+focuspos]:
-            if lemma+'.'+pos in count[focuslemma+'.'+focuspos][sense]:
-                Nkloc += count[focuslemma+'.'+focuspos][sense][lemma+'.'+pos]
+        for sense in count[(focuslemma,focuspos)]:
+            if (lemma,pos) in count[(focuslemma,focuspos)][sense]:
+                Nkloc += count[(focuslemma,focuspos)][sense][(lemma,pos)]
                 
 
-        Nkcorp = float(totalcount[lemma+'.'+pos]) #/ float(totalcount_sum)
+        Nkcorp = float(totalcount[(lemma,pos)]) #/ float(totalcount_sum)
 
         #if focuslemma == 'wild':
         #    print "p = (",Ns_kloc,"/",Nkloc,") * 1/",Nkcorp, " = ",  (Ns_kloc / Nkloc) * (1/Nkcorp)
@@ -300,7 +300,7 @@ class CLWSD2Trainer(object):
         bag = []
         #select all words that occur at least 3 times for a sense, and have a probability_sense_given_keyword >= 0.001
         for sense in count[(focuslemma,focuspos)]:
-            for lemma, pos in [ x.rsplit('.',1) for x in count[(focuslemma,focuspos)][sense].keys() ]:
+            for lemma, pos in count[(focuslemma,focuspos)][sense].keys():
                  if (totalcount[(lemma,pos)] >= self.bow_filter_threshold): #filter very rare words (occuring less than 20 times)
                      if count[(focuslemma,focuspos)][sense][(lemma,pos)] >= bow_absolute_threshold:
                         p = self.probability_sense_given_keyword(focuslemma,focuspos,sense,lemma,pos, count, totalcount) 
@@ -323,6 +323,7 @@ class CLWSD2Trainer(object):
 
         count = {}
         totalcount = {}
+        totalcount_sum = 0
         bags = {} #will store bags of words
                              
         if self.bagofwords:
@@ -374,6 +375,7 @@ class CLWSD2Trainer(object):
                 
                 sourcewords, sourcepostags, sourcelemmas = self.sourcetagger.process(sourcewords)
                 sourcepostags = [ x[0].lower() for x in sourcepostags ]
+                                            
                                
                 if self.targettagger: 
                     targetwords, targetpostags, targetlemmas = self.targettagger.process(targetwords)
@@ -383,6 +385,14 @@ class CLWSD2Trainer(object):
                     targetlemmas = []
  
                 for i, (sourceword, sourcepos, sourcelemma) in enumerate(zip(sourcewords, sourcepostags, sourcelemmas)):                
+                    if self.bagofwords and not finalstage:
+                        if not (sourcelemma, sourcepos) in totalcount:                 
+                            totalcount[(sourcelemma, sourcepos)] = 1
+                        else:
+                            totalcount[(sourcelemma, sourcepos)] += 1
+                        totalcount_sum += 1
+                    
+                    
                     if (sourcelemma, sourcepos) in self.targetwords:
                         print >>sys.stderr, " @" + str(sentencenum+1) + ":" + str(i) + " -- Found " + sourcelemma.encode('utf-8') + '.' + sourcepos,
                         target = None
