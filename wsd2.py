@@ -712,6 +712,9 @@ class CLWSD2Tester(object):
         f.write("AVERAGE:\t" + str(sum(plist) / float(len(plist))) + "\t" + str(sum(rlist) / float(len(rlist)))+"\n")
 
 
+        rlist = []
+        plist = []
+
         f.write('\n\nOUT OF FIVE RESULTS\n-------------\n')
         for filename in glob.glob(self.outputdir + '/*.oof.results'):
             lemma,pos = os.path.basename(filename).split('.')[:2]
