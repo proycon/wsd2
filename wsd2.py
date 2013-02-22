@@ -715,7 +715,7 @@ class CLWSD2Tester(object):
                          
             
                 sourcelemma = sourcelemmas[focusindex]
-                sourcepos = sourcepostags[focusindex]                         
+                sourcepos = 'n' #sourcepostags[focusindex]  #tagger may be wrong                         
                          
                 #grab local context features
                 features = []                    
