@@ -351,8 +351,12 @@ class CLWSD2Trainer(object):
                 print >>sys.stderr, "@" + str(sentencenum+1)            
                 
                 if self.gizamodel_s2t: 
-                    s2t = iter_s2t.next() #self.gizamodel_s2t.next()
-                    t2s = iter_t2s.next() #self.gizamodel_t2s.next()
+                    try:
+                        s2t = iter_s2t.next() #self.gizamodel_s2t.next()
+                        t2s = iter_t2s.next() #self.gizamodel_t2s.next()
+                    except StopIteration:
+                        print >>sys.stderr,"WARNING: No more GIZA alignments, breaking"
+                        break
                     #print >>sys.stderr, "S2T: " + repr(s2t)
                     #print >>sys.stderr, "T2S: " + repr(t2s)
                     intersection = s2t.intersect(t2s) 
