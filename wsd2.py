@@ -670,8 +670,12 @@ class CLWSD2Tester(object):
                 bestscore = max(distribution.values())
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
                 fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
-                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + ';'.join(bestsenses) + ';\n')
-                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + ';'.join(fivebestsenses) + ';\n')
+                bestsenses_s = ';'.join(bestsenses)
+                fivebestsenses_s = ';'.join(fivebestsenses)
+                if not isinstance(bestsenses_s,unicode): bestsenses_s  = unicode(bestsenses_s,'utf-8')
+                if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
+                out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
+                out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
                 
                 print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + repr(distribution)
                 
