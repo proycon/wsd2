@@ -548,6 +548,8 @@ class CLWSD2Trainer(object):
                 finalstage = True
         
         self.run2() 
+        if self.DOVOTER:
+            self.makevoterinput()
                 
     def loadclassifiers(self):            
         for lemma,pos in self.targetwords:            
@@ -555,7 +557,7 @@ class CLWSD2Trainer(object):
 
             if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train'):
                 self.classifiers[(lemma,pos,self.targetlang)] = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)        
-            
+
     def run2(self):        
         print >>sys.stderr, "Training " + str(len(self.classifiers)) + " classifiers"
         for classifier in self.classifiers:
@@ -565,6 +567,24 @@ class CLWSD2Trainer(object):
         print >>sys.stderr, "Parameter optimisation"
         for f in glob.glob(self.outputdir + '/*.train'):
             os.system("paramsearch ib1 " + f + " > " + f + ".paramsearch")
+
+
+    def makevoterinput(self):
+        """Make traindata for voter by testing on traindata"""
+        print >>sys.stderr, "Generating voter input by classifying trainings data"    
+        for classifier in self.classifiers:
+            print >>sys.stderr, "Making voter input for " + classifier.fileprefix.encode('utf-8') + '.votertrain'
+            f_out = codecs.open(classifier.fileprefix + '.votertrain','w','utf-8')
+            f_in = codecs.open(classifier.fileprefix + '.train','r','utf-8')
+            for line in f_in:
+                line = line.strip()
+                fields = line.split("\t")
+                features = fields[:-1]
+                classlabel, distribution, distance =  self.classifiers[classifier].classify(features)
+                f_out.write(classlabel + "\t" + fields[-1])
+            f_in.close()
+            f_out.close()
+            
         
         
 def paramsearch2timblargs(filename):
