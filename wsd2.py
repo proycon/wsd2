@@ -571,7 +571,7 @@ class CLWSD2Trainer(object):
 
     def makevoterinput(self):
         """Make traindata for voter by testing on traindata"""
-        print >>sys.stderr, "Generating voter input by classifying trainings data"    
+        print >>sys.stderr, "Generating voter input by classifying traindata"    
         for classifier in self.classifiers:
             print >>sys.stderr, "Making voter input for " + classifier.fileprefix.encode('utf-8') + '.votertrain'
             f_out = codecs.open(classifier.fileprefix + '.votertrain','w','utf-8')
@@ -673,6 +673,8 @@ class CLWSD2Tester(object):
             classifier = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)
             out_best = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
             out_oof = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
+            if self.DOVOTER:
+                out_votertest =  codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.votertest','w','utf-8')
                 
             for instancenum, (id, ( leftcontext,head,rightcontext)) in enumerate(self.testset.instances(lemma,pos)):
                 print >>sys.stderr, "--> " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + leftcontext.encode('utf-8') + " *" + head.encode('utf-8') + "* " + rightcontext.encode('utf-8')
@@ -742,7 +744,7 @@ class CLWSD2Tester(object):
                     
 
                 print " -- Classifier features: " + repr(features)                                        
-                _, distribution, distance = classifier.classify(features)
+                bestsense, distribution, distance = classifier.classify(features)
                 
                 bestscore = max(distribution.values())
                 bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
@@ -753,13 +755,15 @@ class CLWSD2Tester(object):
                 if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
                 out_best.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
                 out_oof.write(lemma + "." + pos + "." + self.targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
-                
+                if DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
                 print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(instancenum+1) + ": " + repr(distribution)
                 
                 
             out_best.close()
             out_oof.close()
-                
+            if DOVOTER:
+                out_votertest.close()
+            
             #score
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
             os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
