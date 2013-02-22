@@ -714,7 +714,7 @@ class CLWSD2Tester(object):
                     raise Exception("Focus word not found after tagging! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(sourcewords).encode('utf-8'))
                          
             
-                sourcelemma = sourcelemmas[focusindex]
+                sourcelemma = lemma #sourcelemmas[focusindex] #tagger may be wrong
                 sourcepos = 'n' #sourcepostags[focusindex]  #tagger may be wrong                         
                          
                 #grab local context features
