@@ -695,7 +695,7 @@ class CLWSD2Tester(object):
                 sourcewords_pretagged = leftcontext + ' ' + head + ' ' + rightcontext
                 
                 sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_pretagged.split(' '))
-                sourcepostags = [ x[0].lower() for x in sourcepostags ]
+                sourcepostags = [ x[0].lower() if x else "?" for x in sourcepostags ]
                 
                               
                 #find new head position (may have moved due to tokenisation)
