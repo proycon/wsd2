@@ -609,7 +609,7 @@ def paramsearch2timblargs(filename):
                 opts += " -k " + field[1:]        
     return opts
 
-def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance)     
+def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance):     
     bestscore = max(distribution.values())
     bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
     fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
@@ -774,7 +774,7 @@ class CLWSD2Tester(object):
             
         scorereport(outputdir)
                  
-def scorereport(self, outputdir):
+def scorereport(outputdir):
     f = codecs.open(outputdir + '/results','w','utf-8')
     f.write('BEST RESULTS\n-------------\n')
     
