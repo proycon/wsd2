@@ -214,6 +214,7 @@ def targetmatch(target, senses):
             if target[:-len(sense) - 1] == sense.lower()[:-1] and len(sense) - len(target) <= 6:  #very crude stem check 
                 return sense
     return None
+
         
 
     
@@ -600,10 +601,25 @@ class CLWSD2Tester(object):
                 testfiles.append(testdir+"/" + lemma + '.data')
             else:
                 print >>sys.stderr, "WARNING: No testfile found for " + lemma + " (tried " + testdir+"/" + lemma + '.data)'
-                
         self.testset = TestSet(testfiles)
+        
+        
         self.timbloptions = timbloptions
         self.bagofwords = bagofwords
+        self.bags = {}        
+        if self.bagofwords:
+            #load bags
+            for bagfile in glob.glob(outputdir + "/*.bag"):
+                print >>sys.stderr, "Loading bag " + bagfile
+                focuslemma,focuspos,_ = os.path.basename(bagfile).split(".")
+                focuslemma = unicode(focuslemma,'utf-8')
+                self.bags[(focuslemma,focuspos)] = []
+                f = codecs.open(bagfile,'r','utf-8')
+                for line in f:
+                    fields = line.split("\t")
+                    if not (fields[0],fields[1]) in self.bags[(focuslemma,focuspos)]:
+                        self.bags[(focuslemma,focuspos)].append((fields[0],fields[1]))
+                f.close()
               
        
     def run(self):
@@ -630,7 +646,10 @@ class CLWSD2Tester(object):
                 
                 sourcewords_pretagged = leftcontext + ' ' + head + ' ' + rightcontext
                 
-                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_pretagged.split(' '))              
+                sourcewords, sourcepostags, sourcelemmas = sourcetagger.process(sourcewords_pretagged.split(' '))
+                sourcepostags = [ x[0].lower() for x in sourcepostags ]
+                
+                              
                 #find new head position (may have moved due to tokenisation)
                 origindex = len(leftcontext.split(' '))
                 mindistance = 9999
@@ -645,6 +664,10 @@ class CLWSD2Tester(object):
                            
                 if focusindex == -1: 
                     raise Exception("Focus word not found after tagging! This should not happen! head=" + head.encode('utf-8') + ",words=" + ' '.join(sourcewords).encode('utf-8'))
+                         
+            
+                sourcelemma = sourcelemmas[focusindex]
+                sourcepos = sourcepostags[focusindex]                         
                          
                 #grab local context features
                 features = []                    
@@ -665,8 +688,27 @@ class CLWSD2Tester(object):
                         features.append("{NULL}")
                         if self.DOPOS: features.append("{NULL}")
                         if self.DOLEMMAS: features.append("{NULL}")     
+                        
+                if self.bagofwords:                    
+                    if (sourcelemma,sourcepos) in self.bags:
+                        for keylemma,keypos in self.bags[(sourcelemma,sourcepos)]:
+                            found = False
+                            for j in range(focusindex - self.contextsize, focusindex + 1 + self.contextsize):
+                                if j > 0 and j < len(sourcewords) and j != focusindex:
+                                    if sourcelemmas[j] == keylemma and sourcepostags[j] == keypos: 
+                                        found = True
+                                        break
+                            
+                            #Write bag-of-word features
+                            if found:
+                                features.append("1")
+                            else:
+                                features.append("0")                          
+                    else:
+                        print >>sys.stderr, 'NOTICE: ' + sourcelemma.encode('utf-8')+ ' ' + sourcepos + ' has no bag'
+                    
 
-                print repr(features)                                            
+                print " -- Classifier features: " + repr(features)                                        
                 _, distribution, distance = classifier.classify(features)
                 
                 bestscore = max(distribution.values())
