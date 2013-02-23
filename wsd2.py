@@ -32,6 +32,8 @@ def usage():
     print >> sys.stderr,"          2) Bag-of-word needs to have sense|keyword probability of at least x"
     print >> sys.stderr,"          3) Filter out words with a global corpus occurence less than x"
     print >> sys.stderr," -R                     Automatically compute absolute threshold per word-expert"
+    print >> sys.stderr," -M [float]  Maximum diverge from best translation option in generation of training data (0 < x < 1), default 0.5"
+    print >> sys.stderr," -I [float]  In final output of best senses, include senses that diverge by 0 < x < 1 from the actual best sense, default 0.9"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
     print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
     print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"    
@@ -609,9 +611,9 @@ def paramsearch2timblargs(filename):
                 opts += " -k " + field[1:]        
     return opts
 
-def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance):     
+def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance, divergencefrombestoutputthreshold):     
     bestscore = max(distribution.values())
-    bestsenses = [ sense for sense, score in distribution.items() if score == bestscore ]
+    bestsenses = [ sense for sense, score in sorted(distribution.items(), key=lambda x: x[1] * -1) if score >= bestscore * divergencefrombestoutputthreshold  ]
     fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
     bestsenses_s = ';'.join(bestsenses)
     fivebestsenses_s = ';'.join(fivebestsenses)
@@ -624,7 +626,7 @@ def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, dist
 
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1):        
         self.sourcetagger = sourcetagger
         
         
@@ -649,6 +651,7 @@ class CLWSD2Tester(object):
                 print >>sys.stderr, "WARNING: No testfile found for " + lemma + " (tried " + testdir+"/" + lemma + '.data)'
         self.testset = TestSet(testfiles)
         
+        self.divergencefrombestoutputthreshold = divergencefrombestoutputthreshold
         
         self.timbloptions = timbloptions
         self.bagofwords = bagofwords
@@ -759,7 +762,7 @@ class CLWSD2Tester(object):
                 print " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
                 
-                processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance)
+                processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
                 
                 if self.DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
                 
@@ -824,7 +827,7 @@ def scorereport(outputdir):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:V", ["train","test", "nogen", "Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:", ["train","test", "nogen", "Stagger=","Ttagger="])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -846,6 +849,9 @@ if __name__ == "__main__":
     exemplarweights = False
     timbloptions = "-a 0 -k 1"
     contextsize = 0
+    
+    maxdivergencefrombest = 0.5
+    divergencefrombestoutputthreshold = 0.9
     
     gizafile_s2t = ""
     gizafile_t2s = ""
@@ -915,6 +921,10 @@ if __name__ == "__main__":
             compute_bow_params = True
         elif o == '-V':
             DOVOTER = True
+        elif o == '-M':
+            maxdivergencefrombest = float(a)
+        elif o == '-I':
+            divergencefrombestoutputthreshold = float(a)            
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
@@ -950,7 +960,7 @@ if __name__ == "__main__":
             gizamodel_s2t = None
             gizamodel_t2s = None
                    
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold)
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest)
         if not TRAINGEN:
             trainer.loadclassifiers()
             trainer.run2()
@@ -958,5 +968,5 @@ if __name__ == "__main__":
             trainer.run()
         
     if TEST:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold)
         tester.run()

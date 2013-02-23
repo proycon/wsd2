@@ -11,7 +11,7 @@ import glob
 
 
 def usage():
-    print >> sys.stderr,"Usage: wsd2-voter.py -c [classifierdir1 classifierdir2] -L [lang]  -o [outputdir] -O [timbloptions]"
+    print >> sys.stderr,"Usage: wsd2-voter.py -c [classifierdir1 classifierdir2] -L [lang]  -o [outputdir] -O [timbloptions] -I [divergencefrombestoutputthreshold]"
     
 
 try:
@@ -29,6 +29,7 @@ timbloptions = "-a 0 -k 1"
 testdir = wsd2.WSDDIR + "/data/trial"
 targetwordsfile = wsd2.WSDDIR + "/data/targetwords.trial"
 classifierdirs = []
+divergencefrombestoutputthreshold = 0.9
 
 for o, a in opts:
     if o == "-c":	
@@ -43,7 +44,8 @@ for o, a in opts:
         testdir = a     
     elif o == '-w':   
         targetwordsfile = a
-        
+    elif o == '-I':
+        divergencefrombestoutputthreshold = float(a)
     else:
         raise Exception("Unknown option: " + o)
 
@@ -145,7 +147,7 @@ for lemma,pos in testset.lemmas():
             features.append( votertestdata[(lemma,pos)][id][classifiername] )
         sense, distribution, distance = classifiers[(lemma,pos)].classify(features)
         print >>sys.stderr, "--> Classifying " + id + " :" + repr(features)
-        wsd2.processresult(out_best, out_oof, id, lemma, pos, targetlang, sense, distribution, distance)
+        wsd2.processresult(out_best, out_oof, id, lemma, pos, targetlang, sense, distribution, distance, divergencefrombestoutputthreshold)
 
     out_best.close()
     out_oof.close()
