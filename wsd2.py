@@ -782,8 +782,12 @@ class CLWSD2Tester(object):
         print >>sys.stderr, "Scoring"
         for lemma,pos in self.testset.lemmas():  
             print >>sys.stderr, "Scoring " + lemma.encode('utf-8')
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + self.outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + self.outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
+            r = os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + self.outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
+            if r != 0:
+                print >>sys.stderr,"ERROR: SCORER FAILED! INSPECT " + outputdir + '/' + lemma + '.' + pos + '.best.scorerr' 
+            r = os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + self.outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
+            if r != 0:
+                print >>sys.stderr,"ERROR: SCORER FAILED! INSPECT " + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr'            
             
         scorereport(self.outputdir)            
                  
