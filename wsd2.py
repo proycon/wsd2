@@ -36,7 +36,9 @@ def usage():
     print >> sys.stderr," -I [float]  In final output of best senses, include senses that diverge by 0 < x < 1 from the actual best sense, default 0.9"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
     print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
-    print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"    
+    print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"
+    print >> sys.stderr," --nogen     Use with --train: train classifiers but do NOT regenerate training instances"    
+    print >> sys.stderr," --scoreonly No training or testing, just score existing result files"
         
 class TestSet(object):
     languages = {
@@ -836,6 +838,7 @@ if __name__ == "__main__":
     
     TRAIN = TEST = False
     TRAINGEN = True
+    SCOREONLY = False
     sourcefile = targetfile = phrasetablefile = ""
     targetwordsfile = WSDDIR + "/data/targetwords.trial"
     DOLEMMAS = False
@@ -871,6 +874,8 @@ if __name__ == "__main__":
             TEST = True              
         elif o == "--nogen":	
             TRAINGEN = False  
+        elif o == "--scoreonly":
+            SCOREONLY = True
         elif o == '-a':                      
             fields = a.split(':')
             gizafile_s2t = fields[0]
@@ -968,5 +973,7 @@ if __name__ == "__main__":
             trainer.run()
         
     if TEST:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold)        
         tester.run()
+    elif SCOREONLY:
+        scorereport(outputdir)
