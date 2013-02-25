@@ -773,13 +773,17 @@ class CLWSD2Tester(object):
             if DOVOTER:
                 out_votertest.close()
             
-            #score
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
-            os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')
             
         scorereport(outputdir)
                  
 def scorereport(outputdir):
+    
+    for lemma,pos in self.testset.lemmas():    
+        #score
+        os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.best' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt 2> ' + outputdir + '/' + lemma + '.' + pos + '.best.scorerr')
+        os.system('perl ' + WSDDIR + '/ScorerTask3.pl ' + outputdir + '/' + lemma + '.' + pos + '.oof' + ' ' + WSDDIR + '/data/trial/' + self.targetlang + '/' + lemma + '_gold.txt -t oof 2> ' + outputdir + '/' + lemma + '.' + pos + '.oof.scorerr')        
+
+    
     f = codecs.open(outputdir + '/results','w','utf-8')
     f.write('BEST RESULTS\n-------------\n')
     
