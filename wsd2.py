@@ -933,11 +933,12 @@ if __name__ == "__main__":
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
+         
             
     if not targetlang:            
         print >>sys.stderr, "ERROR: No target language specified"
         sys.exit(2)
-    elif not sourcetagger:            
+    elif not SCOREONLY and not sourcetagger:            
         print >>sys.stderr, "ERROR: No source tagger specified"
         sys.exit(2)            
         
