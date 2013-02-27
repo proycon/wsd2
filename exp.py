@@ -63,6 +63,10 @@ def compute(targetlang, c,pos,lemma,bag):
     except:
         pass
     
+    if not os.path.isdir(basedir + '/' + targetlang + '/' + reference):
+        raise Exception("Reference dir does not exist: " + basedir + '/' + targetlang + '/' + reference)
+        
+    
     for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.train'):
         outputfile = outputdir + '/' + os.path.basename(filename)
         print >>sys.stderr,"Extracting train files"
