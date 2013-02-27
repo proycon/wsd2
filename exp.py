@@ -68,7 +68,7 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Extracting train files"
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',computekeep(c,pos,lemma,bag))
         extractor.run()
-        print >>sys.stderr,"Training system w"
+        
         cmd = 'python wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
         if pos: cmd += ' -p'
@@ -79,17 +79,19 @@ def compute(targetlang, c,pos,lemma,bag):
         cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
         cmd += ' --Stagger=file:' + basedir + '/en.tagged'
         if os.path.exists(basedir + '/' + targetlang + '.tagged'): 
-            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '.tagged'        
+            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '.tagged'
+        print >>sys.stderr,"Training system: " + cmd        
         r = os.system(cmd)
         if r != 0:
             print >>sys.stderr,"ERROR: Training " + targetlang + " " + id + " FAILED!"    
-        print >>sys.stderr,"Testing system"
+        
         cmd = 'python wsd2.py --nogen --train -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
         if pos: cmd += ' -p'
         if lemma: cmd += ' -p'
         if bag: cmd += ' -b'
-        cmd += ' --Stagger=freeling:localhost:1850'       
+        cmd += ' --Stagger=freeling:localhost:1850'
+        print >>sys.stderr,"Testing system: " + cmd       
         r = os.system(cmd)
         if r != 0:
             print >>sys.stderr,"ERROR: Testing " + targetlang + " " + id + " FAILED!"    
