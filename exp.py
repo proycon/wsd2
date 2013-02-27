@@ -83,7 +83,7 @@ def compute(targetlang, c,pos,lemma,bag):
         cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
         cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
         if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
-            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '.tagged'
+            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
         print >>sys.stderr,"Training system: " + cmd        
         r = os.system(cmd)
         if r != 0:
