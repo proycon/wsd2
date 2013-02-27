@@ -70,7 +70,7 @@ def compute(targetlang, c,pos,lemma,bag):
         outputfile = outputdir + '/' + os.path.basename(filename)
         os.system("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log")
         keep = computekeep(c,pos,lemma,bag)
-        print >>sys.stderr,"Extracting train files with " + keep      
+        print >>sys.stderr,"Extracting train files for " + id + " with " + keep      
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
         
