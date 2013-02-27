@@ -81,15 +81,15 @@ def compute(targetlang, c,pos,lemma,bag):
         cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
         cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
         cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
-        cmd += ' --Stagger=file:' + basedir + '/en.tagged'
-        if os.path.exists(basedir + '/' + targetlang + '.tagged'): 
+        cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
+        if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
             cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '.tagged'
         print >>sys.stderr,"Training system: " + cmd        
         r = os.system(cmd)
         if r != 0:
             print >>sys.stderr,"ERROR: Training " + targetlang + " " + id + " FAILED!"    
         
-        cmd = 'python wsd2.py --nogen --train -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
+        cmd = 'python wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
         if pos: cmd += ' -p'
         if lemma: cmd += ' -p'
