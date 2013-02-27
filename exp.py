@@ -28,7 +28,7 @@ def computekeep(c, pos, lemma, bag):
    
     for contextitem in range(0,11): #0 1 2 3 4   5   6 7 8 9 10 
         field += 1
-        if contextitem >= 5-c and field <= 5+c :
+        if contextitem >= 5-c and contextitem <= 5+c :
             keep.append(str(field))
             field += 1
             if pos: keep.append(str(field))
