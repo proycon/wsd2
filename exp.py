@@ -7,9 +7,14 @@ import os
 import glob
 from joblib import Parallel, delayed
 
-basedir = sys.argv[1]
-targetwords = sys.argv[2]
-testdir = sys.argv[3]
+try:
+    threads = int(sys.argv[1])
+    basedir = sys.argv[2]
+    targetwords = sys.argv[3]
+    testdir = sys.argv[4]
+except:
+    print >>sys.stderr,"Usage: exp.py threads basedir targetwords testdir"
+    sys.exit(2)
 
 targetlangs = ['nl','es','it','fr','de']
 
@@ -99,6 +104,7 @@ for targetlang in targetlangs:
         configurations.append(  (targetlang, c,False,False,True)  )       
         configurations.append(  (targetlang, c,True,True,False) )
         configurations.append(  (targetlang, c,False,True,True) )
+        configurations.append(  (targetlang, c,True,False,True) )
         configurations.append(  (targetlang, c,True,True,True) )                    
         
-Parallel(n_jobs=7)(delayed(compute)(*conf) for conf in configurations)
+Parallel(n_jobs=threads)(delayed(compute)(*conf) for conf in configurations)
