@@ -645,6 +645,8 @@ def processresult_final(out_oof, oof_senses):
             if not sense in fivebestsenses:
                 fivebestsenses.append(s)
         fivebestsenses_s = ';'.join(fivebestsenses)
+        if not isinstance(fivebestsenses_s, unicode): fivebestsenses_s = unicode(fivebestsenses_s, 'utf-8')
+        if not isinstance(lemma, unicode): lemma = unicode(lemma, 'utf-8')
         out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
     
         
