@@ -32,11 +32,11 @@ def computekeep(c, pos, lemma, bag):
         contextitem += 1
         if contextitem > c:
             break
-        keep.append(field)
+        keep.append(str(field))
         field += 1
-        if pos: keep.append(field)
+        if pos: keep.append(str(field))
         field += 1
-        if lemma: keep.append(field)        
+        if lemma: keep.append(str(field))        
 
     if bag:         
         if field == 0: field = 1
