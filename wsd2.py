@@ -616,11 +616,11 @@ def paramsearch2timblargs(filename):
 def processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, divergencefrombestoutputthreshold):     
     bestscore = max(distribution.values())
     bestsenses = [ sense for sense, score in sorted(distribution.items(), key=lambda x: x[1] * -1) if score >= bestscore * divergencefrombestoutputthreshold  ]
-    fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
+    #fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
     bestsenses_s = ';'.join(bestsenses)
-    fivebestsenses_s = ';'.join(fivebestsenses)
+    #fivebestsenses_s = ';'.join(fivebestsenses)
     if not isinstance(bestsenses_s,unicode): bestsenses_s  = unicode(bestsenses_s,'utf-8')
-    if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
+    #if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
     out_best.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
     oof_senses.append( (id, lemma, pos, targetlang, distribution, distance) )
     #out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
@@ -642,7 +642,7 @@ def processresult_final(out_oof, oof_senses):
         for s in oof_baseline:
             if len(fivebestsenses) == 5:
                 break
-            if not sense in fivebestsenses:
+            if not s in fivebestsenses:
                 fivebestsenses.append(s)
         fivebestsenses_s = ';'.join(fivebestsenses)
         if not isinstance(fivebestsenses_s, unicode): fivebestsenses_s = unicode(fivebestsenses_s, 'utf-8')
