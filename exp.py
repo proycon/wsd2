@@ -26,7 +26,14 @@ def computekeep(c, pos, lemma, bag):
     field = 0
     keep = []
     contextitem = 0
-    
+
+    #focus word    
+    keep.append(str(field))
+    field += 1
+    if pos: keep.append(str(field))
+    field += 1
+    if lemma: keep.append(str(field))
+                
     while True: 
         field += 1
         contextitem += 1
@@ -69,6 +76,7 @@ def compute(targetlang, c,pos,lemma,bag):
     
     for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.train'):
         outputfile = outputdir + '/' + os.path.basename(filename)
+        os.system("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log")
         print >>sys.stderr,"Extracting train files"
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',computekeep(c,pos,lemma,bag))
         extractor()
