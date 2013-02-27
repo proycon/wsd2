@@ -87,7 +87,7 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Training system: " + cmd        
         r = os.system(cmd)
         if r != 0:
-            print >>sys.stderr,"ERROR: Training " + targetlang + " " + id + " FAILED!"    
+            raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
         
         cmd = 'python wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
@@ -98,7 +98,7 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Testing system: " + cmd       
         r = os.system(cmd)
         if r != 0:
-            print >>sys.stderr,"ERROR: Testing " + targetlang + " " + id + " FAILED!"    
+            raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
                 
 
 configurations = []
