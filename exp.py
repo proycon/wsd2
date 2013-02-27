@@ -71,7 +71,7 @@ def compute(targetlang, c,pos,lemma,bag):
         outputfile = outputdir + '/' + os.path.basename(filename)
         print >>sys.stderr,"Extracting train files"
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',computekeep(c,pos,lemma,bag))
-        extractor.run()
+        extractor()
         
         cmd = 'python wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
