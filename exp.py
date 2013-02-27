@@ -26,9 +26,9 @@ def computekeep(c, pos, lemma, bag):
     field = 0
     keep = []
    
-    for contextitem in range(0,5): 
+    for contextitem in range(0,11): 
         field += 1
-        if field >= 3-c and field <= 3+c :
+        if contextitem >= 6-c and field <= 6+c :
             keep.append(str(field))
             field += 1
             if pos: keep.append(str(field))
@@ -70,7 +70,7 @@ def compute(targetlang, c,pos,lemma,bag):
         outputfile = outputdir + '/' + os.path.basename(filename)
         os.system("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log")
         keep = computekeep(c,pos,lemma,bag)
-        print >>sys.stderr,"Extracting train files for " + id + " with " + keep      
+        print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
         
