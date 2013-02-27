@@ -613,7 +613,7 @@ def paramsearch2timblargs(filename):
                 opts += " -k " + field[1:]        
     return opts
 
-def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance, divergencefrombestoutputthreshold):     
+def processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, divergencefrombestoutputthreshold):     
     bestscore = max(distribution.values())
     bestsenses = [ sense for sense, score in sorted(distribution.items(), key=lambda x: x[1] * -1) if score >= bestscore * divergencefrombestoutputthreshold  ]
     fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
@@ -622,10 +622,34 @@ def processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, dist
     if not isinstance(bestsenses_s,unicode): bestsenses_s  = unicode(bestsenses_s,'utf-8')
     if not isinstance(fivebestsenses_s,unicode): fivebestsenses_s  = unicode(fivebestsenses_s,'utf-8')
     out_best.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' :: ' + bestsenses_s + ';\n')
-    out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
+    oof_senses.append( (id, lemma, pos, targetlang, distribution, distance) )
+    #out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
     print >>sys.stderr, "<-- Timbl output for " + lemma.encode('utf-8') + '.' + pos + " @" + str(id) + ": " + repr(distribution)
 
 
+def processresult_final(out_oof, oof_senses):     
+    senses = {}
+    for id, lemma, pos, targetlang, distribution, distance in oof_senses:
+        for sense, score in distribution.items():
+            if not sense in senses:
+                senses[sense] = score
+            else:
+                senses[sense] += score
+    oof_baseline =  [ sense for sense, score in sorted(senses.items()[:5], key=lambda x: -1 * x[1]) ]
+    
+    for id, lemma, pos, targetlang, distribution, distance in oof_senses:
+        fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
+        for s in oof_baseline:
+            if len(fivebestsenses) == 5:
+                break
+            if not sense in fivebestsenses:
+                fivebestsenses.append(s)
+        fivebestsenses_s = ';'.join(fivebestsenses)
+        out_oof.write(lemma + "." + pos + "." + targetlang + ' ' + str(id) + ' ::: ' + fivebestsenses_s + ';\n')
+    
+        
+         
+        
     
 class CLWSD2Tester(object):          
     def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1):        
@@ -691,6 +715,7 @@ class CLWSD2Tester(object):
             classifier = timbl.TimblClassifier(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang, timbloptions)
             out_best = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
             out_oof = codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')
+            oof_senses = []
             if self.DOVOTER:
                 out_votertest =  codecs.open(self.outputdir + '/' + lemma + '.' + pos + '.votertest','w','utf-8')
                 
@@ -764,16 +789,16 @@ class CLWSD2Tester(object):
                 print " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
                 
-                processresult(out_best, out_oof, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
+                processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
                 
                 if self.DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
                 
             out_best.close()
+            processresult_final(out_oof, oof_senses)
             out_oof.close()
             if DOVOTER:
                 out_votertest.close()
-            
-
+        
         self.score()   
 
         

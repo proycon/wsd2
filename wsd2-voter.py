@@ -139,6 +139,7 @@ for lemma,pos in testset.lemmas():
      
     out_best = codecs.open(outputdir + '/' + lemma + '.' + pos + '.best','w','utf-8')
     out_oof = codecs.open(outputdir + '/' + lemma + '.' + pos + '.oof','w','utf-8')     
+    oof_senses = []
      
     for id in sorted(votertestdata[(lemma,pos)]):     
         features = []
@@ -147,9 +148,10 @@ for lemma,pos in testset.lemmas():
             features.append( votertestdata[(lemma,pos)][id][classifiername] )
         sense, distribution, distance = classifiers[(lemma,pos)].classify(features)
         print >>sys.stderr, "--> Classifying " + id + " :" + repr(features)
-        wsd2.processresult(out_best, out_oof, id, lemma, pos, targetlang, sense, distribution, distance, divergencefrombestoutputthreshold)
+        wsd2.processresult(out_best, oof_senses, id, lemma, pos, targetlang, sense, distribution, distance, divergencefrombestoutputthreshold)
 
     out_best.close()
+    wsd2.processresult_final(out_oof, oof_senses)
     out_oof.close()
          
     #score
