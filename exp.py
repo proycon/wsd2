@@ -25,26 +25,18 @@ contextsizes = [1,2,3,4,5]
 def computekeep(c, pos, lemma, bag):
     field = 0
     keep = []
-    contextitem = 0
-
-    #focus word    
-    keep.append(str(field))
-    field += 1
-    if pos: keep.append(str(field))
-    field += 1
-    if lemma: keep.append(str(field))
-                
-    while True: 
+   
+    for contextitem in range(0,5): 
         field += 1
-        contextitem += 1
-        if contextitem > c:
-            break
-        keep.append(str(field))
-        field += 1
-        if pos: keep.append(str(field))
-        field += 1
-        if lemma: keep.append(str(field))        
-
+        if field >= 3-c and field <= 3+c :
+            keep.append(str(field))
+            field += 1
+            if pos: keep.append(str(field))
+            field += 1
+            if lemma: keep.append(str(field))            
+        else:
+            field +=2
+            
     if bag:         
         if field == 0: field = 1
         keep.append(str(field) + ':-1')
