@@ -75,37 +75,37 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
-        
-        cmd = 'python wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
-        cmd += ' -c ' + str(c)
-        if pos: cmd += ' -p'
-        if lemma: cmd += ' -p'
-        if bag: cmd += ' -b'
-        cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
-        cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
-        cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
-        cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
-        if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
-            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
-        cmd += ' >&2 2> ' + outputdir + '/train.log'
-        print >>sys.stderr,"Training "+ targetlang + " " + id + ": " + cmd        
-        r = subprocess.call(cmd, shell=True)
-        if r != 0:
-            raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
-        print >>sys.stderr,"Done testing"
-        
-        cmd = 'python wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
-        cmd += ' -c ' + str(c)
-        if pos: cmd += ' -p'
-        if lemma: cmd += ' -p'
-        if bag: cmd += ' -b'
-        cmd += ' --Stagger=freeling:localhost:1850'
-        cmd += ' >&2 2> ' + outputdir + '/test.log'
-        print >>sys.stderr,"Testing "+ targetlang + " " + id + ": " + cmd               
-        r = subprocess.call(cmd, shell=True)
-        if r != 0:
-            raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
-        print >>sys.stderr,"Done testing"          
+    
+    cmd = 'python wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
+    cmd += ' -c ' + str(c)
+    if pos: cmd += ' -p'
+    if lemma: cmd += ' -p'
+    if bag: cmd += ' -b'
+    cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
+    cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
+    cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
+    cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
+    if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
+        cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
+    cmd += ' >&2 2> ' + outputdir + '/train.log'
+    print >>sys.stderr,"Training "+ targetlang + " " + id + ": " + cmd        
+    r = subprocess.call(cmd, shell=True)
+    if r != 0:
+        raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
+    print >>sys.stderr,"Done testing"
+    
+    cmd = 'python wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
+    cmd += ' -c ' + str(c)
+    if pos: cmd += ' -p'
+    if lemma: cmd += ' -p'
+    if bag: cmd += ' -b'
+    cmd += ' --Stagger=freeling:localhost:1850'
+    cmd += ' >&2 2> ' + outputdir + '/test.log'
+    print >>sys.stderr,"Testing "+ targetlang + " " + id + ": " + cmd               
+    r = subprocess.call(cmd, shell=True)
+    if r != 0:
+        raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
+    print >>sys.stderr,"Done testing"          
 
 
 
