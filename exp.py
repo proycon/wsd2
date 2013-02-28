@@ -4,6 +4,7 @@
 import sys
 import campyon
 import os
+import subprocess
 import glob
 from joblib import Parallel, delayed
 
@@ -68,7 +69,7 @@ def compute(targetlang, c,pos,lemma,bag):
     
     for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.train'):
         outputfile = outputdir + '/' + os.path.basename(filename)
-        os.system("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log")
+        subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
         keep = computekeep(c,pos,lemma,bag)
         print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
@@ -85,9 +86,9 @@ def compute(targetlang, c,pos,lemma,bag):
         cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
         if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
             cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
-        cmd += ' > /dev/null 2> ' + outputdir + '/train.log'
+        cmd += ' >&2 2> ' + outputdir + '/train.log'
         print >>sys.stderr,"Training "+ targetlang + " " + id + ": " + cmd        
-        r = os.system(cmd)
+        r = subprocess.call(cmd, shell=True)
         if r != 0:
             raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
         print >>sys.stderr,"Done testing"
@@ -98,9 +99,9 @@ def compute(targetlang, c,pos,lemma,bag):
         if lemma: cmd += ' -p'
         if bag: cmd += ' -b'
         cmd += ' --Stagger=freeling:localhost:1850'
-        cmd += ' > /dev/null 2> ' + outputdir + '/test.log'
+        cmd += ' >&2 2> ' + outputdir + '/test.log'
         print >>sys.stderr,"Testing "+ targetlang + " " + id + ": " + cmd               
-        r = os.system(cmd)
+        r = subprocess.call(cmd, shell=True)
         if r != 0:
             raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
         print >>sys.stderr,"Done testing"          
