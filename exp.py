@@ -8,9 +8,7 @@ import subprocess
 import glob
 from joblib import Parallel, delayed
 
-
-WSDDIR = os.path.dirname(__file__)
-
+WSDDIR = os.path.dirname(os.path.abspath(__file__))
 
 try:
     threads = int(sys.argv[1])
