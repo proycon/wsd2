@@ -8,6 +8,10 @@ import subprocess
 import glob
 from joblib import Parallel, delayed
 
+
+WSDDIR = os.path.dirname(__file__)
+
+
 try:
     threads = int(sys.argv[1])
     basedir = sys.argv[2]
@@ -54,7 +58,7 @@ def computeid(c,pos,lemma,bag):
     
     
 def compute(targetlang, c,pos,lemma,bag):
-    global basedir, reference, targetwords, testdir
+    global basedir, reference, targetwords, testdir, WSDDIR
     id = computeid(c,pos,lemma,bag)
     print >>sys.stderr,"\nProcessing " + targetlang + " " + id
     print >>sys.stderr,"-------------------------------------------"  
@@ -63,6 +67,7 @@ def compute(targetlang, c,pos,lemma,bag):
         os.mkdir(outputdir)
     except:
         pass
+    os.chdir(outputdir)
     
     if not os.path.isdir(basedir + '/' + targetlang + '/' + reference):
         raise Exception("Reference dir does not exist: " + basedir + '/' + targetlang + '/' + reference)
@@ -76,7 +81,7 @@ def compute(targetlang, c,pos,lemma,bag):
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
     
-    cmd = 'python wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
+    cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
     cmd += ' -c ' + str(c)
     if pos: cmd += ' -p'
     if lemma: cmd += ' -p'
@@ -94,7 +99,7 @@ def compute(targetlang, c,pos,lemma,bag):
         raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
     print >>sys.stderr,"Done testing"
     
-    cmd = 'python wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
+    cmd = 'python ' + WSDDIR + '/wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
     cmd += ' -c ' + str(c)
     if pos: cmd += ' -p'
     if lemma: cmd += ' -p'
@@ -107,7 +112,7 @@ def compute(targetlang, c,pos,lemma,bag):
         raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
     print >>sys.stderr,"Done testing"          
 
-
+    os.chdir(WSDDIR)
 
 configurations = []
 for targetlang in targetlangs:
