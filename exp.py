@@ -21,6 +21,8 @@ except:
     print >>sys.stderr,"Usage: exp.py threads basedir targetwords testdir"
     sys.exit(2)
 
+print >>sys.stderr, "WSDDIR=" + WSDDIR
+
 targetlangs = ['nl','es','it','fr','de']
 
 reference = 'c5lpbR'
