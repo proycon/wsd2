@@ -56,7 +56,8 @@ def computeid(c,pos,lemma,bag):
 def compute(targetlang, c,pos,lemma,bag):
     global basedir, reference, targetwords, testdir
     id = computeid(c,pos,lemma,bag)
-    print >>sys.stderr,"Processing " + targetlang + " " + id 
+    print >>sys.stderr,"\nProcessing " + targetlang + " " + id
+    print >>sys.stderr,"-------------------------------------------"  
     outputdir = basedir + '/' + targetlang + '/' + id
     try:
         os.mkdir(outputdir)
@@ -106,6 +107,8 @@ def compute(targetlang, c,pos,lemma,bag):
             raise Exception("ERROR: Testing " + targetlang + " " + id + " FAILED!")    
         print >>sys.stderr,"Done testing"          
 
+
+
 configurations = []
 for targetlang in targetlangs:
     for c in contextsizes:
@@ -117,5 +120,9 @@ for targetlang in targetlangs:
         configurations.append(  (targetlang, c,False,True,True) )
         configurations.append(  (targetlang, c,True,False,True) )
         configurations.append(  (targetlang, c,True,True,True) )                    
-        
-Parallel(n_jobs=threads)(delayed(compute)(*conf) for conf in configurations)
+
+if threads > 1:        
+    Parallel(n_jobs=threads)(delayed(compute)(*conf) for conf in configurations)
+else:
+    for conf in configurations:
+        compute(*conf)
