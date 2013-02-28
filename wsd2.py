@@ -16,7 +16,7 @@ import random
 #matplotlib.use('Agg')
 #import matplotlib.pyplot
 
-WSDDIR = os.path.dirname(__file__)
+WSDDIR = os.path.dirname(os.path.abspath(__file__))
 
 def usage():
     """Print usage instructions"""
