@@ -71,12 +71,12 @@ def compute(targetlang, c,pos,lemma,bag):
     
     if not os.path.isdir(basedir + '/' + targetlang + '/' + reference):
         raise Exception("Reference dir does not exist: " + basedir + '/' + targetlang + '/' + reference)
-        
+    
+    subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
+    keep = computekeep(c,pos,lemma,bag)
     
     for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.train'):
-        outputfile = outputdir + '/' + os.path.basename(filename)
-        subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
-        keep = computekeep(c,pos,lemma,bag)
+        outputfile = outputdir + '/' + os.path.basename(filename)        
         print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
