@@ -61,8 +61,11 @@ for lang in languages:
         for lemma in sorted(lemmas):
             print "best\t" + lang + "\t" + lemma.encode('utf-8')
             if lemma in bestdata[lang]:
-                for x in sorted(bestdata[lang][lemma].items(), key=x[1] * -1)[:3]: 
-                    print "\t" + x,
+                bestconfs = sorted(bestdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3]
+                if len(bestconfs) < 3:
+                    bestconfs += ["-"] * (3 - len(bestconfs))
+                for conf in bestconfs: 
+                    print "\t" + conf,
                 for conf in sorted(confs):
                     if conf in bestdata[lang][lemma]:
                         print "\t" + str(bestdata[lang][lemma][conf]),
@@ -76,8 +79,11 @@ for lang in languages:
             
             print "oof\t" + lang + "\t" + lemma.encode('utf-8')
             if lemma in oofdata[lang]:
-                for x in sorted(oofdata[lang][lemma].items(), key=x[1] * -1)[:3]: 
-                    print "\t" + x,
+                bestconfs = sorted(bestdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3]
+                if len(bestconfs) < 3:
+                    bestconfs += ["-"] * (3 - len(bestconfs) )               
+                for conf in bestconfs: 
+                    print "\t" + conf,
                 for conf in sorted(confs):
                     if conf in oofdata[lang][lemma]:
                         print "\t" + str(oofdata[lang][lemma][conf]),
