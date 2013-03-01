@@ -46,7 +46,7 @@ for lang in languages:
                                 if not lemma in oofdata: 
                                     oofdata[lang][lemma] = {}
                                 oofdata[lang][lemma][conf] = score                                
-                    f.close()
+                f.close()
 
 
 print "TYPE\tLANG\tLEMMA\tFIRST\tSECOND\tTHIRD",
