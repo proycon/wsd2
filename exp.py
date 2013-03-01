@@ -80,33 +80,42 @@ def compute(targetlang, c,pos,lemma,bag):
     subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
     keep = computekeep(c,pos,lemma,bag)
     
+    DOTRAIN = False
     for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.train'):
         outputfile = outputdir + '/' + os.path.basename(filename)        
-        print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
-        extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
-        extractor()
+        if os.path.exists(outputfile):
+            basename = outputfile[:-6]
+            if not os.path.exists(basename + '.ibase') or not os.path.exists(basename + '.train.paramsearch'):
+                DOTRAIN = True
+
+        else:
+            DOTRAIN = True
+            print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
+            extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
+            extractor()
         
     if bag:
         for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.bag'):
             shutil.copyfile(filename,outputdir + '/' + os.path.basename(filename))            
     
-    cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
-    cmd += ' -c ' + str(c)
-    if pos: cmd += ' -p'
-    if lemma: cmd += ' -p'
-    if bag: cmd += ' -b'
-    cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
-    cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
-    cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
-    cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
-    if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
-        cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
-    cmd += ' >&2 2> ' + outputdir + '/train.log'
-    print >>sys.stderr,"Training "+ targetlang + " " + id + ": " + cmd        
-    r = subprocess.call(cmd, shell=True)
-    if r != 0:
-        raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
-    print >>sys.stderr,"Done testing"
+    if DOTRAIN:
+        cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
+        cmd += ' -c ' + str(c)
+        if pos: cmd += ' -p'
+        if lemma: cmd += ' -p'
+        if bag: cmd += ' -b'
+        cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
+        cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
+        cmd += ' -a ' + basedir + '/' + targetlang + '/' + targetlang + '-' + 'en.A3.final:' + basedir + '/' + targetlang + '/en-' + targetlang + '.A3.final'  
+        cmd += ' --Stagger=file:' + basedir + '/' + targetlang + '/en.tagged'
+        if os.path.exists(basedir + '/' + targetlang + '/' + targetlang + '.tagged'): 
+            cmd += ' --Ttagger=file:' + basedir + '/' + targetlang + '/' + targetlang + '.tagged'
+        cmd += ' >&2 2> ' + outputdir + '/train.log'
+        print >>sys.stderr,"Training "+ targetlang + " " + id + ": " + cmd        
+        r = subprocess.call(cmd, shell=True)
+        if r != 0:
+            raise Exception("ERROR: Training " + targetlang + " " + id + " FAILED!")    
+        print >>sys.stderr,"Done training"
     
     cmd = 'python ' + WSDDIR + '/wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
     cmd += ' -c ' + str(c)
