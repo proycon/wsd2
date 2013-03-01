@@ -77,7 +77,7 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Already done, skipping " + id
         return
     
-    subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
+    
     keep = computekeep(c,pos,lemma,bag)
     
     DOTRAIN = False
