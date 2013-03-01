@@ -23,6 +23,7 @@ for lang in languages:
             conf = os.path.basename(confdir)
             confs.add(conf)
             if os.path.exists(confdir + '/results'):
+                print >>sys.stderr,"Processing " + confdir + '/results'
                 mode = ''
                 f = codecs.open(confdir + '/results','r','utf-8')
                 for line in f:
@@ -39,11 +40,11 @@ for lang in languages:
                                 lemma = 'OVERALL'
                             score = float(fields[1])
                             if mode == 'best':
-                                if not lemma in bestdata: 
+                                if not lemma in bestdata[lang]: 
                                     bestdata[lang][lemma] = {}
                                 bestdata[lang][lemma][conf] = score
                             elif mode == 'oof':
-                                if not lemma in oofdata: 
+                                if not lemma in oofdata[lang]: 
                                     oofdata[lang][lemma] = {}
                                 oofdata[lang][lemma][conf] = score                                
                 f.close()
