@@ -61,7 +61,7 @@ for lang in languages:
         for lemma in sorted(lemmas):
             print "best\t" + lang + "\t" + lemma.encode('utf-8')
             if lemma in bestdata[lang]:
-                bestconfs = sorted(bestdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3]
+                bestconfs = [ conf for conf, score in sorted(bestdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3] ]
                 if len(bestconfs) < 3:
                     bestconfs += ["-"] * (3 - len(bestconfs))
                 for conf in bestconfs: 
@@ -79,7 +79,7 @@ for lang in languages:
             
             print "oof\t" + lang + "\t" + lemma.encode('utf-8')
             if lemma in oofdata[lang]:
-                bestconfs = sorted(bestdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3]
+                bestconfs =  [ conf for conf, score in sorted(oofdata[lang][lemma].items(), key=lambda x: x[1] * -1)[:3] ]
                 if len(bestconfs) < 3:
                     bestconfs += ["-"] * (3 - len(bestconfs) )               
                 for conf in bestconfs: 
