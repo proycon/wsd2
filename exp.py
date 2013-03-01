@@ -6,6 +6,7 @@ import campyon
 import os
 import subprocess
 import glob
+import shutil
 from joblib import Parallel, delayed
 
 WSDDIR = os.path.dirname(os.path.abspath(__file__))
@@ -72,6 +73,10 @@ def compute(targetlang, c,pos,lemma,bag):
     if not os.path.isdir(basedir + '/' + targetlang + '/' + reference):
         raise Exception("Reference dir does not exist: " + basedir + '/' + targetlang + '/' + reference)
     
+    if os.path.exists(outputdir + '/results'): 
+        print >>sys.stderr,"Already done, skipping " + id
+        return
+    
     subprocess.call("rm " + outputdir + "/*.paramsearch " + outputdir + "/*.bestsetting " + outputdir + "/*.log", shell=True)
     keep = computekeep(c,pos,lemma,bag)
     
@@ -80,6 +85,10 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Extracting train files for " + id + " with " + keep + " to " + outputfile   
         extractor = campyon.Campyon('-f',filename, '-o',outputfile,'-k',keep)
         extractor()
+        
+    if bag:
+        for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.bag'):
+            shutil.copyfile(filename,outputdir + '/' + os.path.basename(filename))            
     
     cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
     cmd += ' -c ' + str(c)
