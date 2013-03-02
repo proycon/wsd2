@@ -28,6 +28,9 @@ reference = 'c5lpbR'
 
 contextsizes = [1,2,3,4,5]
 
+constraints = ['c1','c2','c3', 'c1l','c2l','c3l', 'c1p','c2p', 'c1lp','c2lp','c3lp','c0b','c1b', 'c3lpb']
+
+
 def computekeep(c, pos, lemma, bag):
     field = 0
     keep = []
@@ -59,7 +62,7 @@ def computeid(c,pos,lemma,bag):
     
     
 def compute(targetlang, c,pos,lemma,bag):
-    global basedir, reference, targetwords, testdir, WSDDIR
+    global basedir, reference, targetwords, testdir, WSDDIR, constraints
     id = computeid(c,pos,lemma,bag)
     print >>sys.stderr,"\nProcessing " + targetlang + " " + id
     print >>sys.stderr,"-------------------------------------------"  
@@ -76,6 +79,12 @@ def compute(targetlang, c,pos,lemma,bag):
     if os.path.exists(outputdir + '/results'): 
         print >>sys.stderr,"Already done, skipping " + id
         return
+
+    
+    if constraints and not id in constraints:
+        print >>sys.stderr,"Not in constraints, skipping " + id
+        return        
+        
     
     
     keep = computekeep(c,pos,lemma,bag)
