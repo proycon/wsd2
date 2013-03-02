@@ -18,9 +18,9 @@ for lang in languages:
     bestdata[lang] = {}
     oofdata[lang] = {}
     
-    for confdir in glob.glob(basedir + '/' + lang + '/c*'):
-        if os.path.isdir(confdir):
-            conf = os.path.basename(confdir)
+    for confdir in glob.glob(basedir + '/' + lang + '/*'):
+        conf = os.path.basename(confdir)
+        if os.path.isdir(confdir) and (conf[0] == 'c' or conf == 'baseline'):
             confs.add(conf)
             if os.path.exists(confdir + '/results'):
                 print >>sys.stderr,"Processing " + confdir + '/results'
