@@ -102,7 +102,7 @@ def compute(targetlang, c,pos,lemma,bag):
         cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
         if pos: cmd += ' -p'
-        if lemma: cmd += ' -p'
+        if lemma: cmd += ' -l'
         if bag: cmd += ' -b'
         cmd += ' -s ' + basedir + '/' + targetlang + '/en.txt'
         cmd += ' -t ' + basedir + '/' + targetlang + '/' + targetlang + '.txt'
@@ -120,7 +120,7 @@ def compute(targetlang, c,pos,lemma,bag):
     cmd = 'python ' + WSDDIR + '/wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
     cmd += ' -c ' + str(c)
     if pos: cmd += ' -p'
-    if lemma: cmd += ' -p'
+    if lemma: cmd += ' -l'
     if bag: cmd += ' -b'
     cmd += ' --Stagger=freeling:localhost:1850'
     cmd += ' >&2 2> ' + outputdir + '/test.log'
