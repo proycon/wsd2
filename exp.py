@@ -48,7 +48,7 @@ def computekeep(c, pos, lemma, bag):
             field +=2
             
     if bag:         
-        if field == 0: field = 1
+        field += 1
         keep.append(str(field) + ':-1')
     else:
         keep.append('-1')
