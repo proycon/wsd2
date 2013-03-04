@@ -79,18 +79,18 @@ for lemma,pos in testset.lemmas():
         
         
         if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.' + targetlang + '.votertrain'):
-            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.' + targetlang + '.votertrain')
+            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.' + targetlang + '.votertrain','r','utf-8')
             for line in f:
                 line = line.strip()
                 fields = line.split('\t')
-                votertraindata[(lemma,pos)][classifiername].append( (fields[0], fields[1]) )  #(train,gold)
+                votertraindata[(lemma,pos)][classifiername].append( (fields[0],fields[1]) )  #(train,gold)
             f.close() 
         else:
             raise Exception("No votertrain found for " + lemma.encode('utf-8') + " in " + classifierdir)              
             
 
         if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.votertest'):
-            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.votertest')
+            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.votertest','r','utf-8')
             for line in f:
                 line = line.strip()
                 fields = line.split('\t')
