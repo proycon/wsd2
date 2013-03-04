@@ -590,7 +590,7 @@ class CLWSD2Trainer(object):
                 classlabel, distribution, distance =  self.classifiers[classifier].classify(features)
                 if not isinstance(classlabel, unicode): classlabel = unicode(classlabel,'utf-8')
                 if not isinstance(fields[-1], unicode): fields[-1] = unicode(fields[-1],'utf-8') 
-                f_out.write(classlabel + "\t" + fields[-1])
+                f_out.write(classlabel + "\t" + fields[-1] + "\n")
             f_in.close()
             f_out.close()
             
