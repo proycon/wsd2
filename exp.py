@@ -118,7 +118,7 @@ def compute(targetlang, c,pos,lemma,bag):
     
     if DOTRAIN and not testonly:            
         cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
-        cmd += ' -c ' + str(c)
+        cmd += ' -V -c ' + str(c)
         if pos: cmd += ' -p'
         if lemma: cmd += ' -l'
         if bag: cmd += ' -b'
@@ -136,7 +136,7 @@ def compute(targetlang, c,pos,lemma,bag):
         print >>sys.stderr,"Done training"
     
     cmd = 'python ' + WSDDIR + '/wsd2.py --test -L ' + targetlang  + ' -o ' + outputdir + ' -T ' + testdir + ' -w ' + targetwords
-    cmd += ' -c ' + str(c)
+    cmd += ' -V -c ' + str(c)
     if pos: cmd += ' -p'
     if lemma: cmd += ' -l'
     if bag: cmd += ' -b'

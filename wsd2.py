@@ -39,6 +39,8 @@ def usage():
     print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"
     print >> sys.stderr," --nogen     Use with --train: train classifiers but do NOT regenerate training instances"    
     print >> sys.stderr," --scoreonly No training or testing, just score existing result files"
+    print >> sys.stderr," --votertrainonly    Only generate and train voter (implies --nogen)"
+    VOTERTRAINONLY
         
 class TestSet(object):
     languages = {
@@ -920,6 +922,10 @@ if __name__ == "__main__":
             TRAINGEN = False  
         elif o == "--scoreonly":
             SCOREONLY = True
+            TRAINGEN = False 
+        elif o == '--votertrainonly':
+            VOTERTRAINONLY = True
+            TRAINGEN = False 
         elif o == '-a':                      
             fields = a.split(':')
             gizafile_s2t = fields[0]
@@ -1010,8 +1016,11 @@ if __name__ == "__main__":
             gizamodel_s2t = None
             gizamodel_t2s = None
                    
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest)
-        if not TRAINGEN:
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest)        
+        if VOTERTRAINONLY:
+            trainer.loadclassifiers()
+            trainer.makevoterinput()
+        elif not TRAINGEN:
             trainer.loadclassifiers()
             trainer.run2()
         else:
