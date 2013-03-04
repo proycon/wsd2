@@ -12,7 +12,7 @@ import glob
 
 def usage():
     print >> sys.stderr,"Usage: wsd2-voter.py -c [classifierdir1 classifierdir2] -L [lang]  -o [outputdir] -O [timbloptions] -I [divergencefrombestoutputthreshold]"
-    
+        
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "c:L:o:O:")
@@ -49,7 +49,9 @@ for o, a in opts:
     else:
         raise Exception("Unknown option: " + o)
 
-
+if not classifierdirs or not targetwordsfile or not targetlang:
+    usage()
+    sys.exit(2)
 
 
 
