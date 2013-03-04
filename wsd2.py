@@ -890,6 +890,7 @@ if __name__ == "__main__":
     DOLEMMAS = False
     DOPOS = False
     DOVOTER = False
+    VOTERTRAINONLY = False
     sourcetagger = None
     targettagger = None
     outputdir = "."
@@ -933,12 +934,12 @@ if __name__ == "__main__":
         elif o == "-s":
             sourcefile = a
             if not os.path.exists(sourcefile):
-                print >>sys.stderr, "ERROR: Source file " + sourcefile + " does not exist"
+                print >>sys.stderr, "ERROR: Source file '" + sourcefile + "' does not exist"
                 sys.exit(2)
         elif o == "-t":
             targetfile = a
             if not os.path.exists(targetfile):
-                print >>sys.stderr, "ERROR: Targetfile " + targetfile + " does not exist"
+                print >>sys.stderr, "ERROR: Targetfile '" + targetfile + "' does not exist"
                 sys.exit(2)            
         elif o == "-m":
             phrasetablefile = a
