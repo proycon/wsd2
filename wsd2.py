@@ -988,17 +988,17 @@ if __name__ == "__main__":
     if not targetlang:            
         print >>sys.stderr, "ERROR: No target language specified"
         sys.exit(2)
-    elif not SCOREONLY and not sourcetagger:            
+    elif not SCOREONLY and not sourcetagger and not VOTERTRAINONLY:            
         print >>sys.stderr, "ERROR: No source tagger specified"
         sys.exit(2)            
         
     if TRAIN:
         
-        if not phrasetablefile and not (gizafile_s2t and gizafile_t2s):
+        if not phrasetablefile and not (gizafile_s2t and gizafile_t2s) and not VOTERTRAINONLY and TRAINGEN:
             print >>sys.stderr, "ERROR: No phrasetable or giza models specified"
             sys.exit(2)
             
-        elif not targettagger:            
+        elif not targettagger and not VOTERTRAINONLY and TRAINGEN:            
             print >>sys.stderr, "WARNING: No target tagger specified"
         
         if TRAINGEN and phrasetablefile:
