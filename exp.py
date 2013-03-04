@@ -16,6 +16,8 @@ try:
     basedir = sys.argv[2]
     targetwords = sys.argv[3]
     testdir = sys.argv[4]
+    if len(sys.argv) >= 6:
+        testonly = int(sys.argv[5])
 except:
     print >>sys.stderr,"Usage: exp.py threads basedir targetwords testdir"
     sys.exit(2)
@@ -63,10 +65,12 @@ def computeid(c,pos,lemma,bag):
     
     
 def compute(targetlang, c,pos,lemma,bag):
-    global basedir, reference, targetwords, testdir, WSDDIR, constraints
+    global basedir, reference, targetwords, testdir, WSDDIR, constraints, testonly
     id = computeid(c,pos,lemma,bag)
     print >>sys.stderr,"\nProcessing " + targetlang + " " + id
     print >>sys.stderr,"-------------------------------------------"  
+    
+    
     outputdir = basedir + '/' + targetlang + '/' + id
     try:
         os.mkdir(outputdir)
@@ -105,7 +109,7 @@ def compute(targetlang, c,pos,lemma,bag):
         for filename in glob.glob(basedir + '/' + targetlang + '/' + reference + '/*.bag'):
             shutil.copyfile(filename,outputdir + '/' + os.path.basename(filename))            
     
-    if DOTRAIN:
+    if DOTRAIN and not testonly:            
         cmd = 'python ' + WSDDIR + '/wsd2.py --nogen --train -L ' + targetlang + ' -o ' + outputdir + ' -w ' + targetwords
         cmd += ' -c ' + str(c)
         if pos: cmd += ' -p'
