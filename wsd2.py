@@ -797,13 +797,12 @@ class CLWSD2Tester(object):
 
                 print " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
+                if not isinstance(unicode, bestsense): bestsense = unicode(bestsense,'utf-8')
                 
                 processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
                 
                 if self.DOVOTER:
-                    s = str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n"
-                    if not isinstance(s, unicode): s = unicode(s, 'utf-8')
-                    out_votertest.write(s)
+                    out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
                 
             out_best.close()
             processresult_final(out_oof, oof_senses)
