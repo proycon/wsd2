@@ -11,6 +11,8 @@ from joblib import Parallel, delayed
 
 WSDDIR = os.path.dirname(os.path.abspath(__file__))
 
+constraints = ['c1','c2','c3', 'c1l','c2l','c3l', 'c1p','c2p', 'c1lp','c2lp','c3lp','c0b','c1b', 'c3lpb']
+
 try:
     threads = int(sys.argv[1])
     basedir = sys.argv[2]
@@ -18,6 +20,8 @@ try:
     testdir = sys.argv[4]
     if len(sys.argv) >= 6:
         testonly = int(sys.argv[5])
+    if len(sys.argv) >= 7:
+        constraints = sys.argv[7].split(',')        
 except:
     print >>sys.stderr,"Usage: exp.py threads basedir targetwords testdir"
     sys.exit(2)
@@ -30,7 +34,7 @@ reference = 'c5lpbR'
 
 contextsizes = [1,2,3,4,5]
 
-constraints = ['c1','c2','c3', 'c1l','c2l','c3l', 'c1p','c2p', 'c1lp','c2lp','c3lp','c0b','c1b', 'c3lpb']
+
 
 
 
