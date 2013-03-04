@@ -579,9 +579,10 @@ class CLWSD2Trainer(object):
         """Make traindata for voter by testing on traindata"""
         print >>sys.stderr, "Generating voter input by classifying traindata"    
         for classifier in self.classifiers:
-            print >>sys.stderr, "Making voter input for " + self.classifiers[classifier].fileprefix.encode('utf-8') + '.votertrain'
-            f_out = codecs.open(classifier.fileprefix + '.votertrain','w','utf-8')
-            f_in = codecs.open(classifier.fileprefix + '.train','r','utf-8')
+            id = self.classifiers[classifier].fileprefix
+            print >>sys.stderr, "Making voter input for " + id.encode('utf-8') + '.votertrain'
+            f_out = codecs.open(id + '.votertrain','w','utf-8')
+            f_in = codecs.open(id + '.train','r','utf-8')
             for line in f_in:
                 line = line.strip()
                 fields = line.split("\t")
