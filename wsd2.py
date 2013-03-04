@@ -797,7 +797,7 @@ class CLWSD2Tester(object):
 
                 print " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
-                if not isinstance(unicode, bestsense): bestsense = unicode(bestsense,'utf-8')
+                if not isinstance(bestsense,unicode): bestsense = unicode(bestsense,'utf-8')
                 
                 processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
                 
