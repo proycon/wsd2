@@ -78,8 +78,8 @@ for lemma,pos in testset.lemmas():
         votertraindata[(lemma,pos)][classifiername] = []
         
         
-        if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.votertrain'):
-            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.votertrain')
+        if os.path.exists(classifierdir + '/' + lemma + '.' + pos + '.' + targetlang + '.votertrain'):
+            f = codecs.open(classifierdir + '/' + lemma + '.' + pos + '.' + targetlang + '.votertrain')
             for line in f:
                 line = line.strip()
                 fields = line.split('\t')
