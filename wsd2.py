@@ -875,7 +875,7 @@ def scorereport(outputdir):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger="])
+	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger=","votertrainonly"])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
