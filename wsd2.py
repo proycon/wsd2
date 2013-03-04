@@ -926,7 +926,8 @@ if __name__ == "__main__":
             TRAINGEN = False 
         elif o == '--votertrainonly':
             VOTERTRAINONLY = True
-            TRAINGEN = False 
+            TRAINGEN = False
+            TRAIN = True 
         elif o == '-a':                      
             fields = a.split(':')
             gizafile_s2t = fields[0]
