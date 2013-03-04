@@ -635,10 +635,12 @@ def processresult_final(out_oof, oof_senses):
                 senses[sense] = score
             else:
                 senses[sense] += score
-    oof_baseline =  [ sense for sense, score in sorted(senses.items()[:5], key=lambda x: -1 * x[1]) ]
+    print >>sys.stderr,"Aggregated senses for OOF baseline: ",
+    print >>sys.stderr, sorted(senses.items(), key=lambda x: -1 * x[1])[:5]    
+    oof_baseline =  [ sense for sense, score in sorted(senses.items(), key=lambda x: -1 * x[1])[:5] ]
     
     for id, lemma, pos, targetlang, distribution, distance in oof_senses:
-        fivebestsenses = [ sense for sense, score in sorted(distribution.items()[:5], key=lambda x: -1 * x[1]) ]
+        fivebestsenses = [ sense for sense, score in sorted(distribution.items(), key=lambda x: -1 * x[1])[:5] ]
         for s in oof_baseline:
             if len(fivebestsenses) == 5:
                 break
