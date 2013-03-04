@@ -800,7 +800,10 @@ class CLWSD2Tester(object):
                 
                 processresult(out_best, oof_senses, id, lemma, pos, targetlang, bestsense, distribution, distance, self.divergencefrombestoutputthreshold)
                 
-                if self.DOVOTER: out_votertest.write(str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n")
+                if self.DOVOTER:
+                    s = str(id) + "\t" + sourcewords[focusindex]+ "\t"+ bestsense + "\n"
+                    if not isinstance(s, unicode): s = unicode(s, 'utf-8')
+                    out_votertest.write(s)
                 
             out_best.close()
             processresult_final(out_oof, oof_senses)
