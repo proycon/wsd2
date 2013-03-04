@@ -21,7 +21,7 @@ try:
     if len(sys.argv) >= 6:
         testonly = int(sys.argv[5])
     if len(sys.argv) >= 7:
-        constraints = sys.argv[7].split(',')        
+        constraints = sys.argv[7].split(',')
 except:
     print >>sys.stderr,"Usage: exp.py threads basedir targetwords testdir"
     sys.exit(2)
@@ -149,6 +149,7 @@ def compute(targetlang, c,pos,lemma,bag):
 
 configurations = []
 for targetlang in targetlangs:
+    configurations.append( (targetlang, 0,False,False,True) ) 
     for c in contextsizes:
         configurations.append( (targetlang, c,False,False,False) ) 
         configurations.append(  (targetlang, c,True,False,False) )
