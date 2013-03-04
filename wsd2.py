@@ -40,7 +40,7 @@ def usage():
     print >> sys.stderr," --nogen     Use with --train: train classifiers but do NOT regenerate training instances"    
     print >> sys.stderr," --scoreonly No training or testing, just score existing result files"
     print >> sys.stderr," --votertrainonly    Only generate and train voter (implies --nogen)"
-    VOTERTRAINONLY
+   
         
 class TestSet(object):
     languages = {
