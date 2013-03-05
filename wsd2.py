@@ -726,7 +726,7 @@ class CLWSD2Tester(object):
                 self.contextsize, self.DOPOS, self.DOLEMMAS, self.bagofwords = self.variableconfiguration[lemma]
                 print >>sys.stderr, "contextsize: ", self.contextsize
                 print >>sys.stderr, "pos: ", self.DOPOS
-                print >>sys.stderr, "lemma: ", self.DOLEMMA
+                print >>sys.stderr, "lemma: ", self.DOLEMMAS
                 print >>sys.stderr, "bag: ", self.bagofwords
 
             timbloptions = self.timbloptions 
