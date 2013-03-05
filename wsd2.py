@@ -999,7 +999,7 @@ if __name__ == "__main__":
         elif o == '-v':
             f = codecs.open(a,'r','utf-8')
             for line in f:
-                fields = line.strip().split("\t")
+                fields = line.strip().split(" ")
                 lemma = fields[0]
                 id = fields[1]
                 var_c = int(id[1])

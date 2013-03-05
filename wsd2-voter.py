@@ -103,18 +103,26 @@ for lemma,pos in testset.lemmas():
             raise Exception("No votertest found for " + lemma.encode('utf-8') + " in " + classifierdir)                          
             
 #TODO: integrity check?    
-    
+
 classifiers = {}
 for lemma,pos in testset.lemmas():       
     print >>sys.stderr, "Processing " + lemma.encode('utf-8')
     
     classifiers[(lemma,pos)] = timbl.TimblClassifier(outputdir + '/' + lemma + '.' + pos + '.' + targetlang, timbloptions)
         
-    for classifierdir in classifierdirs:  
+                
+    col = {}
+            
+    for i, classifierdir in enumerate(classifierdirs):  
         classifiername = os.path.basename(classifierdir)
-        features = []
-        for feature, classlabel in votertraindata[(lemma,pos)][classifiername]:
-            features.append(feature)    
+        if not i in col: col[i] = []                
+                
+        for data, classlabel in votertraindata[(lemma,pos)][classifiername]:            
+            for train, gold in data: 
+                col[i].append(train)
+                if i == 0: col[-1].append(gold)
+                                
+        
         classifiers[(lemma,pos)].append(features, classlabel)
         
 
