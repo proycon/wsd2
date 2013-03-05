@@ -812,7 +812,7 @@ class CLWSD2Tester(object):
                         print >>sys.stderr, 'NOTICE: ' + sourcelemma.encode('utf-8')+ ' ' + sourcepos + ' has no bag'
                     
 
-                print " -- Classifier features: " + repr(features)                                        
+                print >>sys.stderr, " -- Classifier features: " + repr(features)                                        
                 bestsense, distribution, distance = classifier.classify(features)
                 if not isinstance(bestsense,unicode): bestsense = unicode(bestsense,'utf-8')
                 
