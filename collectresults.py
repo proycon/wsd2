@@ -20,7 +20,7 @@ for lang in languages:
     
     for confdir in glob.glob(basedir + '/' + lang + '/*'):
         conf = os.path.basename(confdir)
-        if os.path.isdir(confdir) and (conf[0] == 'c' or conf == 'baseline'):
+        if os.path.isdir(confdir) and (conf[0] == 'c' or conf == 'baseline' or conf[0] == 'v'):
             confs.add(conf)
             if os.path.exists(confdir + '/results'):
                 print >>sys.stderr,"Processing " + confdir + '/results'
