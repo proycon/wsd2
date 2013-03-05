@@ -94,6 +94,7 @@ for lemma,pos in testset.lemmas():
             for line in f:
                 line = line.strip()
                 fields = line.split('\t')
+                id = fields[0]
                 if not id in votertestdata[(lemma,pos)]: 
                     votertestdata[(lemma,pos)][id] = {}
                 votertestdata[(lemma,pos)][id][classifiername] =  (fields[0], fields[1], fields[2])  #(id, focusword, sense)
@@ -147,8 +148,8 @@ for lemma,pos in testset.lemmas():
         features = []
         for classifierdir in classifierdirs:  
             classifiername = os.path.basename(classifierdir)
-            features.append( votertestdata[(lemma,pos)][id][classifiername] )
-        print >>sys.stderr, "--> Classifying " + id + " :", repr(features)
+            features.append( votertestdata[(lemma,pos)][id][classifiername] )            
+        print >>sys.stderr, "--> Classifying " + id + " :" + repr(features)
         sense, distribution, distance = classifiers[(lemma,pos)].classify(features)        
         wsd2.processresult(out_best, oof_senses, id, lemma, pos, targetlang, sense, distribution, distance, divergencefrombestoutputthreshold)
 
