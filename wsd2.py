@@ -722,7 +722,12 @@ class CLWSD2Tester(object):
             print >>sys.stderr, "Processing " + lemma.encode('utf-8')
             
             if self.variableconfiguration:
+                print >>sys.stderr, "Loading variable configuration for " + lemma.encode('utf-8') 
                 self.contextsize, self.DOPOS, self.DOLEMMA, self.bagofwords = self.variableconfiguration[lemma]
+                print >>sys.stderr, "contextsize: ", self.contextsize
+                print >>sys.stderr, "pos: ", self.DOPOS
+                print >>sys.stderr, "lemma: ", self.DOLEMMA
+                print >>sys.stderr, "bag: ", self.bagofwords
 
             timbloptions = self.timbloptions 
             if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch'):
