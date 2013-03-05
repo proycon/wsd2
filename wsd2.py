@@ -723,7 +723,7 @@ class CLWSD2Tester(object):
             
             if self.variableconfiguration:
                 print >>sys.stderr, "Loading variable configuration for " + lemma.encode('utf-8') 
-                self.contextsize, self.DOPOS, self.DOLEMMA, self.bagofwords = self.variableconfiguration[lemma]
+                self.contextsize, self.DOPOS, self.DOLEMMAS, self.bagofwords = self.variableconfiguration[lemma]
                 print >>sys.stderr, "contextsize: ", self.contextsize
                 print >>sys.stderr, "pos: ", self.DOPOS
                 print >>sys.stderr, "lemma: ", self.DOLEMMA
