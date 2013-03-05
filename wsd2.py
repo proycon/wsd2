@@ -1053,7 +1053,7 @@ if __name__ == "__main__":
             gizamodel_s2t = None
             gizamodel_t2s = None
                    
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest, variableconfiguration)        
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest)        
         if VOTERTRAINONLY:
             trainer.loadclassifiers()
             trainer.makevoterinput()
@@ -1064,7 +1064,7 @@ if __name__ == "__main__":
             trainer.run()
         
     if TEST or SCOREONLY:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold, variableconfiguration)
         if TEST:        
             tester.run()
         elif SCOREONLY:
