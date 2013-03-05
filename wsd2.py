@@ -797,8 +797,8 @@ class CLWSD2Tester(object):
                     if (sourcelemma,sourcepos) in self.bags:
                         for keylemma,keypos in self.bags[(sourcelemma,sourcepos)]:
                             found = False
-                            for j in range(focusindex - self.contextsize, focusindex + 1 + self.contextsize):
-                                if j > 0 and j < len(sourcewords) and j != focusindex:
+                            for j, w in enumerate(sourcewords):
+                                if j != focusindex:
                                     if sourcelemmas[j] == keylemma and sourcepostags[j] == keypos: 
                                         found = True
                                         break
