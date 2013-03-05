@@ -36,6 +36,7 @@ def usage():
     print >> sys.stderr," -I [float]  In final output of best senses, include senses that diverge by 0 < x < 1 from the actual best sense, default 0.9"
     print >> sys.stderr," --Stagger   Tagger for source language, set to frog:[port] or freeling:[channel] or corenlp, start the tagger server manually first for the first two"
     print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
+    print >> sys.stderr," -v [file]         Load variable configuration from file"
     print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"
     print >> sys.stderr," --nogen     Use with --train: train classifiers but do NOT regenerate training instances"    
     print >> sys.stderr," --scoreonly No training or testing, just score existing result files"
@@ -661,7 +662,7 @@ def processresult_final(out_oof, oof_senses):
         
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1, variableconfiguration=None):        
         self.sourcetagger = sourcetagger
         
         
@@ -691,7 +692,8 @@ class CLWSD2Tester(object):
         self.timbloptions = timbloptions
         self.bagofwords = bagofwords
         self.bags = {}        
-        if self.bagofwords:
+        self.variableconfiguration = variableconfiguration        
+        if self.bagofwords or self.variableconfiguration:
             #load bags
             for bagfile in glob.glob(outputdir + "/*.bag"):
                 print >>sys.stderr, "Loading bag " + bagfile
@@ -704,13 +706,23 @@ class CLWSD2Tester(object):
                     if not (fields[0],fields[1]) in self.bags[(focuslemma,focuspos)]:
                         self.bags[(focuslemma,focuspos)].append((fields[0],fields[1]))
                 f.close()
+        
               
        
     def run(self):
         global WSDDIR
+        
+        if self.variableconfiguration:
+            for lemma,pos in self.testset.lemmas():            
+                if not lemma in self.variableconfiguration:
+                    raise Exception("No variable configuration passed for " + lemma)
+        
         print >>sys.stderr, "Extracting features from testset"
         for lemma,pos in self.testset.lemmas():            
             print >>sys.stderr, "Processing " + lemma.encode('utf-8')
+            
+            if self.variableconfiguration:
+                self.contextsize, self.DOPOS, self.DOLEMMA, self.bagofwords = self.variableconfiguration[lemma]
 
             timbloptions = self.timbloptions 
             if os.path.exists(self.outputdir + '/' + lemma +'.' + pos + '.' + self.targetlang + '.train.paramsearch'):
@@ -880,7 +892,7 @@ def scorereport(outputdir):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger=","votertrainonly"])
+	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:v:", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger=","votertrainonly"])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -907,6 +919,7 @@ if __name__ == "__main__":
     
     maxdivergencefrombest = 0.5
     divergencefrombestoutputthreshold = 0.9
+    variableconfiguration = {}
     
     gizafile_s2t = ""
     gizafile_t2s = ""
@@ -983,6 +996,18 @@ if __name__ == "__main__":
             compute_bow_params = True
         elif o == '-V':
             DOVOTER = True
+        elif o == '-v':
+            f = codecs.open(a,'r','utf-8')
+            for line in f:
+                fields = line.strip().split("\t")
+                lemma = fields[0]
+                id = fields[1]
+                var_c = int(id[1])
+                var_pos = ('p' in id)
+                var_bag = ('b' in id)
+                var_lemma = ('l' in id)
+                variableconfiguration[lemma] = (var_c,var_pos,var_lemma, var_bag)                                
+            f.close()            
         elif o == '-M':
             maxdivergencefrombest = float(a)
         elif o == '-I':
@@ -1023,7 +1048,7 @@ if __name__ == "__main__":
             gizamodel_s2t = None
             gizamodel_t2s = None
                    
-        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest)        
+        trainer = CLWSD2Trainer(outputdir, targetlang, phrasetable, gizamodel_s2t, gizamodel_t2s, sourcefile, targetfile, targetwordsfile, sourcetagger, targettagger, contextsize, DOPOS, DOLEMMAS, DOVOTER, exemplarweights, timbloptions, bagofwords,compute_bow_params, bow_absolute_threshold, bow_prob_threshold, bow_filter_threshold, maxdivergencefrombest, variableconfiguration)        
         if VOTERTRAINONLY:
             trainer.loadclassifiers()
             trainer.makevoterinput()
