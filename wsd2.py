@@ -931,6 +931,7 @@ if __name__ == "__main__":
     maxdivergencefrombest = 0.5
     divergencefrombestoutputthreshold = 0.9
     variableconfiguration = {}
+    constrainsenses = False
     
     gizafile_s2t = ""
     gizafile_t2s = ""
