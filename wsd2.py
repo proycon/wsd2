@@ -38,6 +38,8 @@ def usage():
     print >> sys.stderr," --Ttagger   Tagger for target language, set to frog:[port] or freeling:[channel] (start the tagger server manually first) or  de.lex or fr.lex for built-in lexicons.. "
     print >> sys.stderr," -v [file]         Load variable configuration from file"
     print >> sys.stderr," -V          Produce input for voter system (choose a different outputdirectory for each classifier)"
+    print >> sys.stderr," -S          Constrain to known senses (prunes other senses during testing)"
+    print >> sys.stderr," -X          Do not score against gold standard"
     print >> sys.stderr," --nogen     Use with --train: train classifiers but do NOT regenerate training instances"    
     print >> sys.stderr," --scoreonly No training or testing, just score existing result files"
     print >> sys.stderr," --votertrainonly    Only generate and train voter (implies --nogen)"
@@ -662,7 +664,7 @@ def processresult_final(out_oof, oof_senses):
         
     
 class CLWSD2Tester(object):          
-    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1, variableconfiguration=None):        
+    def __init__(self, testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold =1, variableconfiguration=None, constrainsenses= False, DOSCORE=True):        
         self.sourcetagger = sourcetagger
         
         
@@ -678,6 +680,8 @@ class CLWSD2Tester(object):
         self.DOVOTER = DOVOTER
         self.exemplarweights = exemplarweights
         self.outputdir = outputdir
+
+        self.DOSCORE = DOSCORE
 
         testfiles = []
         for lemma, pos in self.targetwords:
@@ -827,7 +831,8 @@ class CLWSD2Tester(object):
             if DOVOTER:
                 out_votertest.close()
         
-        self.score()   
+        if self.DOSCORE: 
+            self.score()   
 
         
     def score(self):        
@@ -897,7 +902,7 @@ def scorereport(outputdir):
         
 if __name__ == "__main__":
     try:
-	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:v:", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger=","votertrainonly"])
+	    opts, args = getopt.getopt(sys.argv[1:], "a:s:t:c:lpbB:Ro:w:L:O:m:T:VM:I:v:SX", ["train","test", "nogen", "scoreonly","Stagger=","Ttagger=","votertrainonly"])
     except getopt.GetoptError, err:
 	    # print help information and exit:
 	    print str(err)
@@ -917,6 +922,7 @@ if __name__ == "__main__":
     targettagger = None
     outputdir = "."
     testdir = WSDDIR + "/data/trial"
+    DOSCORE = True
     targetlang = ""
     exemplarweights = False
     timbloptions = "-a 0 -k 1"
@@ -1016,7 +1022,11 @@ if __name__ == "__main__":
         elif o == '-M':
             maxdivergencefrombest = float(a)
         elif o == '-I':
-            divergencefrombestoutputthreshold = float(a)            
+            divergencefrombestoutputthreshold = float(a)
+        elif o == '-S':            
+            constrainsenses = True
+        elif o == '-X':            
+            DOSCORE = False            
         else: 
             print >>sys.stderr,"Unknown option: ", o
             sys.exit(2)
@@ -1064,8 +1074,8 @@ if __name__ == "__main__":
             trainer.run()
         
     if TEST or SCOREONLY:
-        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold, variableconfiguration)
+        tester = CLWSD2Tester(testdir, outputdir, targetlang,targetwordsfile, sourcetagger, timbloptions, contextsize, DOPOS, DOLEMMAS, bagofwords, DOVOTER, divergencefrombestoutputthreshold, variableconfiguration, constrainsenses, DOSCORE)
         if TEST:        
             tester.run()
-        elif SCOREONLY:
+        elif SCOREONLY and DOSCORE:
             tester.score()
