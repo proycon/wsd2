@@ -3,14 +3,14 @@
 
 #-------------------------------------------------------------------------------------
 # WSD2: Cross-Lingual Word Sense Disambiguation 2
-#   for SemEval 2013 - Task 2
+#   for SemEval 2013 - Task 10
 
 # by Maarten van Gompel <proycon@anaproy.nl>
 #   http://github.com/proycon/wsd2
 #   Centre for Language Studies
 #   Radboud University Nijmegen
 
-# The WSD2 system uses a k-NN classifier approach using timbl (IB1). 
+# The WSD2 system uses a k-NN classifier approach using timbl (IB1). It supports
 # local context features, global context keyword features (bag of word model),
 # lemma features and part-of-speech features. Machine learning parameters
 # can be optimised using paramsearch.
