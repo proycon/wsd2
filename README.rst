@@ -1,4 +1,6 @@
-======= WSD2: Cross-Lingual Word Sense Disambiguation 2 =======
+==============================================
+ WSD2: Cross-Lingual Word Sense Disambiguation 2
+==============================================
 
 *submission for SemEval 2013 - Task 10*
 
