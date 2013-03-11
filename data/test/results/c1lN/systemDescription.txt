@@ -1,0 +1,43 @@
+System: WSD2
+Configuration: c1lN
+Team: lst-ru  (Maarten van Gompel)
+Submission Name: WSD2-c1lN
+System source: http://github.com/proycon/wsd2
+
+Approach:
+----------
+
+WSD2 system using a k-NN classifier approach using timbl (IB1). This configuration uses 1 context feature both left and right, a focus word feature, and with added lemma features for both context and focus. Parameters for this run have NOT been optimised.
+
+
+Resources and tools used:
+
+ - Timbl for Machine learning (http://ilk.uvt.nl/timbl)
+ - python-timbl (https://github.com/proycon/python-timbl)
+ - pynlpl (https://github.com/proycon/pynlpl)
+ - Ucto for tokenisation of all languages (http://ilk.uvt.nl/ucto)
+ - Frog for PoS-tagging and Lemmatisation of Dutch (http://ilk.uvt.nl/frog)
+ - FreeLing for PoS-tagging and Lemmatisation of English, Spanish, Italian (http://nlp.lsi.upc.edu/freeling/)
+	
+	
+	Lluís Padró and Evgeny Stanilovsky.
+	FreeLing 3.0: Towards Wider Multilinguality
+	Proceedings of the Language Resources and Evaluation Conference (LREC 2012) ELRA.
+	Istanbul, Turkey. May, 2012.
+
+ - TreeTagger for Pos-tagging and Lemmatisation of French and German (http://www.ims.uni-stuttgart.de/projekte/corplex/TreeTagger/)
+
+	Helmut Schmid (1995): Improvements in Part-of-Speech Tagging with an Application to German. Proceedings of the ACL SIGDAT-Workshop. Dublin, Ireland.
+
+ - GIZA++ for building training data (intersection of alignments)  (http://www.statmt.org/moses/giza/GIZA++.html)
+
+	Franz Josef Och, Hermann Ney. "A Systematic Comparison of Various Statistical Alignment Models", Computational Linguistics, volume 29, number 1, pp. 19-51 March 2003.
+
+ - Europarl7 as training data (http://www.statmt.org/europarl/)
+
+ 	Europarl: A Parallel Corpus for Statistical Machine Translation, Philipp Koehn, MT Summit 2005
+
+
+WSD2 is written in Python 2.7 and makes uses of pynlpl and python-timbl. The system's source-code and experimental results are available under GPLv3 from http://github.com/proycon/wsd2
+
+
