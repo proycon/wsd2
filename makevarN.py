@@ -12,9 +12,12 @@ targetlangs = ('es','fr','de','it','nl')
 for targetlang in targetlangs:
     for d in glob.glob(dir + '/' + targetlang + '/c*'):
         if os.path.isdir(d) and d[-1] != 'N':
-            shutil.copytree(d, d + 'N')
-            os.system("rm " + d + 'N/*.paramsearch')
-            os.system("rm " + d + 'N/*.bestsetting')
+            try:
+                shutil.copytree(d, d + 'N')            
+                os.system("rm " + d + 'N/*.paramsearch')
+                os.system("rm " + d + 'N/*.bestsetting')
+            except:
+                pass
             os.chdir(d+'N')
             confname = os.path.basename(d)
             if '0' in confname:
