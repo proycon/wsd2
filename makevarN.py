@@ -36,7 +36,7 @@ for targetlang in targetlangs:
                 options += ' -p'
             if 'b' in confname:
                 options += ' -b'
-            os.system("python ~/wsd2/wsd2.py --test -T /home/proycon/wsd2/data/test/ -L nl -c " + str(c) + " " + options + " -s ../en.txt -t ../" + targetlang + ".txt -a ../"+targetlang+"-en.A3.final:../en-" + targetlang + ".A3.final  --Stagger=freeling:localhost:1850")
+            os.system("python ~/wsd2/wsd2.py --test -T /home/proycon/wsd2/data/trial -L " + targetlang + " -c " + str(c) + " " + options + " -s ../en.txt -t ../" + targetlang + ".txt -a ../"+targetlang+"-en.A3.final:../en-" + targetlang + ".A3.final  --Stagger=freeling:localhost:1850")
                 
             
 
