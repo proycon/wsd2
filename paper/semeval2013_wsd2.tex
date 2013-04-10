@@ -20,11 +20,10 @@
 \title{WSD2: Parameter optimisation for Memory-based Cross-Lingual Word-Sense Disambiguation}
 
 \author{Maarten van Gompel and Antal van den Bosch \\
-  Centre for Language Studies \\
-  Radboud University Nijmegen \\
+  Centre for Language Studies, Radboud University Nijmegen \\
   {\tt proycon@anaproy.nl}, {\tt a.vandenbosch@let.ru.nl}}
 
-\date{}
+%\date{}
 
 \begin{document}
 \maketitle
@@ -63,7 +62,8 @@ P(s|k) = \frac{N_{s,k_{local}}}{N_{k_{local}}}(\frac{1}{N_{k_{corpus}}})
 
 \section{Feature and Hyperparameter Optimisation}
 
-The size of the local context, the inclusion of global context features, and the inclusion of syntactic features are all feature selection choices to the system. These allow for a variety of combinations to be tested. In addition, each word expert is a $k$-nearest neighbor classifier that can take on many hyperparameters beyond $k$. In the present study we performed both optimisations for all word experts, but the optimisations were performed independently to reduce complexity: we first optimised classifier hyperparameters on the basis of the training examples extracted from our parallel corpus, producing optimal accuracy on each word-expert. Subsequently we optimised feature selection on the basis of the trial data provided for the task. As has been argued before \cite{Host+02}, the joint search space of feature selection and hyperparameters is prohibitively large. Our current setup runs the risk of finding hyperparameters that are not optimal for the feature selection selected in the second optimisation step. Our final results indeed show that only feature selection produced improved results. 
+The size of the local context, the inclusion of global context features, and the inclusion of syntactic features are all feature selection choices to the system. These allow for a variety of combinations to be tested. In addition, each word expert is a $k$-nearest neighbor classifier that can take on many hyperparameters beyond $k$. In the present study we performed both optimisations for all word experts, but the optimisations were performed independently to reduce complexity: we first optimised classifier hyperparameters on the basis of the training examples extracted from our parallel corpus, producing optimal accuracy on each word-expert. Subsequently we optimised feature selection on the basis of the trial data provided for the task. As has been argued before \cite{Hoste+02}, the joint search space of feature selection and hyperparameters is prohibitively large. Our current setup runs the risk of finding hyperparameters that are not optimal for the feature selection selected in the second optimisation step. Our final results indeed show that only feature selection produced improved results. 
+
 
 To optimise the choice of hyperparameters per word expert, a heuristic parameter search algorithm \cite{PARAMSEARCH} was used that implements wrapped progressive sampling using cross-validation: it performs a large number of experiments with many hyperparameter setting combinations on small samples of training data, and then progressively zooms in on combinations estimated to perform well with larger samples of the training data. As a control run we also trained word experts with default hyperparameters, i.e. with $k=1$ and with all other hyperparameters at their default values as specified in the TiMBL implementation.
 
