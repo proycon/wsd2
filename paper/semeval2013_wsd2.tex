@@ -74,16 +74,15 @@ Trial data for the twenty nouns was made available by the task organisers; we us
 To assess the accuracy of a certain configuration of our system as a whole, we take the average over all word experts. An initial experiment on the trial data explores the impact of different context sizes, with hyperparameter optimisation on the classifiers. The results, shown in Figure~\ref{figcontext}, clearly indicate that on average the classifiers perform best with a local context of just one word to the left and one to the right of the word to be disambiguated. Larger context sizes have a negative impact on average accuracy. These tests include hyperparameter optimisation, but the same result holds if hyperparameter optimisation is not performed.
 
 \begin{figure}[t]
-\label{figcontext}
 \includegraphics[width=8cm]{context.png}
 \caption{Average Accuracy for different local context sizes}
+\label{figcontext}
 \end{figure}
 
 We submitted three configurations of our system to the shared task, the maximum number of runs. Adding lemma features to the local context window of three words proves beneficial in general, as shown in Table~\ref{tabtrialresults}. This is therefore the first configuration we submitted (\texttt{c1l}). As second configuration (\texttt{c1lN}) we submitted the same configuration without parameter optimisation on the classifiers.
 
 \begin{table}[t]
 \footnotesize
-\label{tabtrialresults}
 \begin{tabular}{|l|r|r|r|r|r|}
 \hline
 \textbf{BEST} & \textbf{ES} & \textbf{FR} & \textbf{IT} & \textbf{NL} & \textbf{DE} \\
@@ -110,13 +109,13 @@ glob.ccontext & 48.09 & 49.68 & 40.87 & 37.70 & 34.47 \\
 \hline
 \end{tabular}
 \caption{Feature exploration on the trial data}
+\label{tabtrialresults}
 \end{table}
 
 The third configuration (\texttt{var}) we submitted includes feature selection, and selects \emph{per word expert} the configuration that has the highest score on the trial data, and thus mixes all kinds of configurations. Note that hyperparameter optimisation is also enabled for this configuration. Due to the feature selection on the trial data, we by definition obtain the highest scores on this trial data, but this carries the risk of overfitting. Results on the trial data are shown in Table~\ref{tabpar}.
 
 \begin{table}
 \footnotesize
-\label{tabpar}
 \begin{tabular}{|l|r|r|r|r|r|}
 \hline
 \textbf{BEST} & \textbf{ES} & \textbf{FR} & \textbf{IT} & \textbf{NL} & \textbf{DE} \\
@@ -135,13 +134,13 @@ varN & \textbf{52.91} & 53.61 & \textbf{45.92} & 44.32 & 39.40 \\
 \hline
 \end{tabular}
 \caption{Results on the trial data}
+\label{tabpar}
 \end{table}
  
 The hyperparameter optimisation, optimised on classifier accuracy, has a slight negative impact, suggesting overfitting on the training data. Therefore a fourth configuration (\texttt{varN}) was tried later to independently assess the idea of feature selection, without hyperparameter optimisation on the classifiers. This proves to be a good idea. However, the fourth configuration was not yet available for the actual competition. This incidentally would have had no impact on the final ranking between competitors. When we run these systems on the actual test data of the shared task, we obtain the results in Table~\ref{tabfinal}. The best score amongst the other competitors is mentioned in the last row for reference, this is participant Alex Rudnick for all but Best-Spanish.
 
 \begin{table}[tbh]
 \footnotesize
-\label{tabfinal}
 \begin{center}
 \begin{tabular}{|l|r|r|r|r|r|}
 \hline
@@ -168,6 +167,7 @@ best.comp & \textbf{61.69} & 58.20 & \textbf{53.57}  & 46.55 & \textbf{43.66} \\
 \end{tabular}
 \end{center}
 \caption{Results on the test set}
+\label{tabfinal}
 \end{table}
 
 A major factor in this task is the accuracy of lemmatisation, and to lesser extent of part-of-speech tagging. We conducted additional experiments on German and French without lemmatisation, tested on on the trial data. Results immediately fell below baseline. 
