@@ -6,6 +6,7 @@ unset log                              # remove any log-scaling
 unset label                            # remove any previous labels
 set xrange [1:3]
 set xtics (1,2,3)
+set yrange [14:26]
 set ytic auto                          # set ytics automatically
 #set title "Average Accuracy for different local context sizes"
 set xlabel "Local context size"
